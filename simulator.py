@@ -6,13 +6,12 @@ import numpy as np
 import roboticstoolbox as rtb
 import time
 
-class Test:
-
+class MJ:
   def __init__(self):
-    self.m = mujoco.MjModel.from_xml_path('Ur5_robot/scene.xml')
+    self.m = mujoco.MjModel.from_xml_path('scene_files/Ur5_robot/scene.xml')
     self.d = mujoco.MjData(self.m)
     self.joints = [0,0,0,0,0,0,0]
-    self.q0=[0 , -np.pi/2, -np.pi/2, -np.pi/2, np.pi/2,0]
+    self.q0=[0 , -np.pi/2, np.pi/2, -np.pi/2, -np.pi/2, 0]
     self.dt = 1/100
 
     # Universal Robot UR5e kiematics parameters 
@@ -28,6 +27,7 @@ class Test:
         ], name="UR5e"
                     )
     
+
   def getState(self):
     ## State of the simulater robot 
     qState=[]    
@@ -39,9 +39,8 @@ class Test:
   def getEEState(self):
     return self.d.sensordata
     
-  def launch_mujoco(self):
-  
 
+  def launch_mujoco(self):
     with mujoco.viewer.launch_passive(self.m, self.d) as viewer:
       # Close the viewer automatically after 30 wall-seconds.
       start = time.time()
@@ -72,11 +71,13 @@ class Test:
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
   
+
   def sendJoint(self,join_values):
     with self.jointLock:
       for i in range(0, 6):
         self.joints[i] = join_values[i]
       self.sendPositions = True
+
 
   def start(self):
     self.jointLock = Lock()
@@ -87,17 +88,15 @@ class Test:
     input()
     # set state of the robot
     self.sendJoint(self.q0)
-    input()
     print("Press any key to continue")
-    
+    input()
     # read state of the robot
     qq = self.getState()
     print(qq)
-
 
     print("pres to exit")
     input()
     
 
 if __name__ == "__main__":
-  Test().start() 
+  MJ().start() 
