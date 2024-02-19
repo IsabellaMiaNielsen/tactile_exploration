@@ -11,7 +11,7 @@ class MJ:
     self.m = mujoco.MjModel.from_xml_path('scene_files/Ur5_robot/scene.xml')
     self.d = mujoco.MjData(self.m)
     self.joints = [0,0,0,0,0,0,0]
-    self.q0=[0 , -np.pi/2, np.pi/2, -np.pi/2, -np.pi/2, 0]
+    self.q0=[0, -np.pi/2, np.pi/2, -np.pi/2, -np.pi/2, 0]
     self.dt = 1/100
 
     # Universal Robot UR5e kiematics parameters 
@@ -97,6 +97,3 @@ class MJ:
     print("pres to exit")
     input()
     
-
-if __name__ == "__main__":
-  MJ().start() 
