@@ -18,6 +18,8 @@
 
     <!--meshes-->
     <mesh name ="table" file="sigmund_table.obj" scale= "1 1 1"/>
+    <mesh name ="pikachu" file="obj.obj" scale= ".007 .007 .007"/>
+    <!-- <mesh name ="wrist" file="wrist3.obj" scale= "1 1 1"/> -->
 
   </asset>
 
@@ -31,9 +33,14 @@
     <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
     <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
 
-      <!--table -->
+      <!-- table-->
     <body name = "table" euler="0 0 -1.57" pos= "-0.70 -0.23 0.74" >
       <geom type="mesh" mesh="table"/>
+    </body>
+
+      <!--object -->
+    <body name = "pikachu" euler="0 -1.57 -1.57" pos= "-.3 0 .75" >
+      <geom type="mesh" mesh="pikachu"/>
     </body>
   </worldbody>
 

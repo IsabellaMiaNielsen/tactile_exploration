@@ -6,6 +6,7 @@ import numpy as np
 import roboticstoolbox as rtb
 import time
 
+
 class MJ:
   def __init__(self):
     self.m = mujoco.MjModel.from_xml_path('scene_files/Ur5_robot/scene.xml')
@@ -84,16 +85,18 @@ class MJ:
     self.sendPositions = False
     mujoco_thrd = Thread(target=self.launch_mujoco, daemon=True)
     mujoco_thrd.start()
-    print("Send robot to init state")
-    input()
-    # set state of the robot
-    self.sendJoint(self.q0)
-    print("Press any key to continue")
-    input()
-    # read state of the robot
-    qq = self.getState()
-    print(qq)
+    while(1):
+      data = mujoco.MjData(self.m)
+      for i in data.sensordata:
+        ft_sensor_values = i["FTSensor"]
+      # Print force-torque sensor reading
+        print("Force-Torque Sensor Reading:", ft_sensor_values) 
 
-    print("pres to exit")
-    input()
+
+
+  # def getFTValues(self):
+  #   data = mujoco.MjData(self.m)
+  #   ft_sensor_values = data.sensordata
+  #   # Print force-torque sensor reading
+  #   print("Force-Torque Sensor Reading:", ft_sensor_values) 
     
