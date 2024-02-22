@@ -1,3 +1,5 @@
 mujoco
 numpy
 roboticstoolbox-python[collision]
+open3d
+scipy
