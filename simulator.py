@@ -84,19 +84,14 @@ class MJ:
     self.jointLock = Lock()
     self.sendPositions = False
     mujoco_thrd = Thread(target=self.launch_mujoco, daemon=True)
-    mujoco_thrd.start()
-    while(1):
-      data = mujoco.MjData(self.m)
-      for i in data.sensordata:
-        ft_sensor_values = i["FTSensor"]
-      # Print force-torque sensor reading
-        print("Force-Torque Sensor Reading:", ft_sensor_values) 
+    mujoco_thrd.start()    
 
 
-
-  # def getFTValues(self):
-  #   data = mujoco.MjData(self.m)
-  #   ft_sensor_values = data.sensordata
-  #   # Print force-torque sensor reading
-  #   print("Force-Torque Sensor Reading:", ft_sensor_values) 
+  def getFTValues(self):
+    print("actuator force in actuation space")
+    print(self.d.qfrc_smooth)
+    print("actuator force")
+    print(self.d.qfrc_constraint)
+    print("sensor values")
+    print(self.d.sensordata)
     
