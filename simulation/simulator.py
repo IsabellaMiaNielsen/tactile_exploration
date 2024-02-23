@@ -8,6 +8,7 @@ import time
 
 
 class MJ:
+  
   def __init__(self):
     self.m = mujoco.MjModel.from_xml_path('scene_files/Ur5_robot/scene.xml')
     self.d = mujoco.MjData(self.m)
@@ -28,7 +29,7 @@ class MJ:
         ], name="UR5e"
                     )
     
-
+ 
   def getState(self):
     ## State of the simulater robot 
     qState=[]    
@@ -85,6 +86,7 @@ class MJ:
     self.sendPositions = False
     mujoco_thrd = Thread(target=self.launch_mujoco, daemon=True)
     mujoco_thrd.start()    
+    
 
 
   def getFTValues(self):
