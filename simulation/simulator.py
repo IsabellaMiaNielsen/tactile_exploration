@@ -73,7 +73,7 @@ class MJ:
           time.sleep(time_until_next_step)
   
 
-  def sendJoint(self,join_values):
+  def sendJoint(self, join_values):
     with self.jointLock:
       for i in range(0, 6):
         self.joints[i] = join_values[i]
