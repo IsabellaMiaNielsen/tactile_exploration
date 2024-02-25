@@ -15,6 +15,7 @@ class Data_Query:
         """
             Calulates the direction the robot should turn to align with the surface normal
             Returns: Euler angles for rotation
+            If the end effector is parallel to the surface, the rotation matrix should be close to the identity matrix.
         """
         force = self.getFTData()
         force = force_
