@@ -4,6 +4,8 @@ from robot.robot_control import Robot_Controler
 from time import sleep
 import roboticstoolbox as rtb
 import numpy as np
+from spatialmath import SE3
+import transformations as tf
 
 
 if __name__ == "__main__":
@@ -27,11 +29,21 @@ if __name__ == "__main__":
   controller = Robot_Controler(simulator=simulator, sim_data=robot_data,robot=simulator.robot)
   fk = controller.forKin([-0.3, 0, -2.2, 0, 2, 0.7854])
   ik = controller.invKin(fk)
-
   while 1:
-  
-    controller.sendJoint(ik.q)
-    print(ik)
+    input("press to continue")
+    currentTCP = controller.forKin(simulator.getState())
+    
+    target = tf.identity_matrix()
+    target[:3, :3] = currentTCP.R
+    transform = currentTCP.t
+    
+    target[0, 3] = transform.T[0]
+    target[1, 3] = transform.T[1]
+    target[2, 3] = transform.T[2] + .05
+    print(target)
+    config = controller.invKin(target)
+    simulator.sendJoint(config.q)
+
     
   
     
