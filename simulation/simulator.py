@@ -8,27 +8,30 @@ import time
 
 
 class MJ:
-  def __init__(self):
+  
+  def __init__(self, robot:rtb.DHRobot):
     self.m = mujoco.MjModel.from_xml_path('scene_files/Ur5_robot/scene.xml')
     self.d = mujoco.MjData(self.m)
     self.joints = [0,0,0,0,0,0,0]
     self.q0=[0, -np.pi/2, np.pi/2, -np.pi/2, -np.pi/2, 0]
     self.dt = 1/100
+    self.robot = rtb.DHRobot(
+      [ 
+          rtb.RevoluteDH(d=0.1625, alpha = np.pi/2),
+          rtb.RevoluteDH(a=-0.425),
+          rtb.RevoluteDH(a=-0.3922),
+          rtb.RevoluteDH(d=0.1333, alpha=np.pi/2),
+          rtb.RevoluteDH(d=0.0997, alpha=-np.pi/2),
+          rtb.RevoluteDH(d=0.0996)
+      ], name="UR5e"
+                  )
+    self.fk = self.robot.fkine(self.getState())
+    self.ik = self.robot.ikine_LM(self.fk)
 
     # Universal Robot UR5e kiematics parameters 
 
-    self.robot = rtb.DHRobot(
-        [ 
-            rtb.RevoluteDH(d=0.1625, alpha = np.pi/2),
-            rtb.RevoluteDH(a=-0.425),
-            rtb.RevoluteDH(a=-0.3922),
-            rtb.RevoluteDH(d=0.1333, alpha=np.pi/2),
-            rtb.RevoluteDH(d=0.0997, alpha=-np.pi/2),
-            rtb.RevoluteDH(d=0.0996)
-        ], name="UR5e"
-                    )
     
-
+ 
   def getState(self):
     ## State of the simulater robot 
     qState=[]    
@@ -84,7 +87,9 @@ class MJ:
     self.jointLock = Lock()
     self.sendPositions = False
     mujoco_thrd = Thread(target=self.launch_mujoco, daemon=True)
-    mujoco_thrd.start()    
+    mujoco_thrd.start()
+    # self.sendJoint(self.ik[0])    
+    
 
 
   def getFTValues(self):
