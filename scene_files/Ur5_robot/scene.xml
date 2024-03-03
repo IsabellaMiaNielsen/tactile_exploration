@@ -19,6 +19,7 @@
     <!--meshes-->
     <mesh name ="table" file="sigmund_table.obj" scale= "1 1 1"/>
     <mesh name ="pikachu" file="obj.obj" scale= ".007 .007 .007"/>
+    <mesh name ="gripper" file="gripper.obj" scale= "20 20 20"/>
     <!-- <mesh name ="wrist" file="wrist3.obj" scale= "1 1 1"/> -->
 
   </asset>
@@ -42,6 +43,13 @@
     <body name = "pikachu" euler="0 -1.57 -1.57" pos= "-.3 0 .75" >
       <geom type="mesh" mesh="pikachu"/>
     </body>
+
+          <!--object -->
+    <body name = "gripper" euler="0 -1.57 -1.57" pos= "-.3 0 .75" >
+      <geom type="mesh" mesh="gripper"/>
+    </body>
+
+    
   </worldbody>
 
 </mujoco>
