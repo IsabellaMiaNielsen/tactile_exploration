@@ -23,24 +23,27 @@ if __name__ == "__main__":
   simulator = MJ(robot)
     # Universal Robot UR5e kiematics parameters 
 
-
   simulator.start()
   robot_data = Data_Query(simulator.d)
   controller = Robot_Controler(simulator=simulator, sim_data=robot_data,robot=simulator.robot)
   fk = controller.forKin([-0.3, 0, -2.2, 0, 2, 0.7854])
   ik = controller.invKin(fk)
+  simulator.sendJoint(ik.q)
   while 1:
     input("press to continue")
+    print(simulator.getState())
     currentTCP = controller.forKin(simulator.getState())
-    
+    config = controller.invKin(currentTCP)
+    simulator.sendJoint(config.q)
+    continue
     target = tf.identity_matrix()
-    target[:3, :3] = currentTCP.R
+    target[:3, :3] = robot_data.directionToNormal(currentTCP.R, [0, 1, 0]) #currentTCP.R
     transform = currentTCP.t
-    
-    target[0, 3] = transform.T[0]
-    target[1, 3] = transform.T[1]
-    target[2, 3] = transform.T[2] + .05
-    print(target)
+    target[0, 3] = transform.T[0] 
+    target[1, 3] = transform.T[1] + 0.05
+    target[2, 3] = transform.T[2] 
+    #print(target)
+    print(currentTCP.t)
     config = controller.invKin(target)
     simulator.sendJoint(config.q)
 
