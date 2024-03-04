@@ -19,7 +19,7 @@
     <!--meshes-->
     <mesh name ="table" file="sigmund_table.obj" scale= "1 1 1"/>
     <mesh name ="pikachu" file="obj.obj" scale= ".007 .007 .007"/>
-    <mesh name ="gripper" file="gripper.obj" scale= "20 20 20"/>
+    <mesh name ="gripper" file="gripper.obj" scale= "1000 1000 1000"/>
     <!-- <mesh name ="wrist" file="wrist3.obj" scale= "1 1 1"/> -->
 
   </asset>
