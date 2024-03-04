@@ -1,0 +1,29 @@
+
+
+<mujocoinlcude>
+    <material class="ur5e" name="black" rgba="0.033 0.033 0.033 1"/>
+    <material class="ur5e" name="jointgray" rgba="0.278 0.278 0.278 1"/>
+    <material class="ur5e" name="linkgray" rgba="0.82 0.82 0.82 1"/>
+    <material class="ur5e" name="urblue" rgba="0.49 0.678 0.8 1"/>
+
+    <mesh file="assets/base_0.obj"/>
+    <mesh file="assets/base_1.obj"/>
+    <mesh file="assets/shoulder_0.obj"/>
+    <mesh file="assets/shoulder_1.obj"/>
+    <mesh file="assets/shoulder_2.obj"/>
+    <mesh file="assets/upperarm_0.obj"/>
+    <mesh file="assets/upperarm_1.obj"/>
+    <mesh file="assets/upperarm_2.obj"/>
+    <mesh file="assets/upperarm_3.obj"/>
+    <mesh file="assets/forearm_0.obj"/>
+    <mesh file="assets/forearm_1.obj"/>
+    <mesh file="assets/forearm_2.obj"/>
+    <mesh file="assets/forearm_3.obj"/>
+    <mesh file="assets/wrist1_0.obj"/>
+    <mesh file="assets/wrist1_1.obj"/>
+    <mesh file="assets/wrist1_2.obj"/>
+    <mesh file="assets/wrist2_0.obj"/>
+    <mesh file="assets/wrist2_1.obj"/>
+    <mesh file="assets/wrist2_2.obj"/>
+    <mesh file="assets/wrist3.obj"/>
+</mujocoinlcude>

@@ -1,6 +1,6 @@
 <mujoco model="ur5e scene">
 
-  <include file="ur5e.xml"/>
+  <include file="ur5e/ur5e.xml" />
 
   <statistic center="0.3 0 0.4" extent="0.8"/>
 
@@ -17,8 +17,8 @@
     <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
 
     <!--meshes-->
-    <mesh name ="table" file="sigmund_table.obj" scale= "1 1 1"/>
-    <mesh name ="pikachu" file="obj.obj" scale= ".007 .007 .007"/>
+    <mesh name ="table" file="assets/sigmund_table.obj" scale= "1 1 1"/>
+    <mesh name ="pikachu" file="assets/obj.obj" scale= ".007 .007 .007"/>
     <!-- <mesh name ="wrist" file="wrist3.obj" scale= "1 1 1"/> -->
 
   </asset>

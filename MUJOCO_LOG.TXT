@@ -28,3 +28,24 @@ ERROR: mjv_updateSceneState: m->nu changed
 Mon Feb 26 22:19:51 2024
 ERROR: mjv_updateSceneState: m->nu changed
 
+Mon Mar  4 16:50:54 2024
+WARNING: mju_openResource: unknown file 'scene_files/Ur5_robot/scene_files/ur5e/objects/ur5e/ur5e.xml'
+
+Mon Mar  4 16:51:42 2024
+WARNING: mju_openResource: unknown file 'scene_files/Ur5_robot/../ur5e/ur5e_classes.xml'
+
+Mon Mar  4 16:52:48 2024
+WARNING: mju_openResource: unknown file 'scene_files/Ur5_robot/../ur5e/objects/ur5e/ur5e.xml'
+
+Mon Mar  4 20:15:59 2024
+WARNING: mju_openResource: unknown file 'scene_files/Ur5_robot/scene.xml'
+
+Mon Mar  4 20:17:18 2024
+WARNING: mju_openResource: unknown file 'scene_files/Ur5_robot/scene.xml'
+
+Mon Mar  4 20:17:35 2024
+WARNING: mju_openResource: unknown file 'scene_files/../ur5e/ur5e_actuators.xml'
+
+Mon Mar  4 20:19:39 2024
+WARNING: mju_openResource: unknown file 'scene_files/../ur5e/ur5e_actuators.xml'
+

@@ -1,0 +1,31 @@
+
+<mujocoinclude>
+    <general class="size3"  ctrllimited="true" ctrlrange="-3.14159 3.14159"     name="actuator1"  joint="joint1"/>
+    <general class="size3"  ctrllimited="true" ctrlrange="-3.14159 3.14159"     name="actuator2" joint="joint2"/>
+    <general class="size3"  ctrllimited="true" ctrlrange="-3.14159 3.14159"     name="actuator3"         joint="joint3"/>
+    <general class="size1"  ctrllimited="true" ctrlrange="-3.14159 3.14159"     name="actuator4"       joint="joint4"/>
+    <general class="size1"  ctrllimited="true" ctrlrange="-3.14159 3.14159"     name="actuator5"       joint="joint5"/>
+    <general class="size1"  ctrllimited="true" ctrlrange="-3.14159 3.14159"     name="actuator6"       joint="joint6"/>
+    
+    <!-- <position name='ur5e_shoulder_pan'  joint="ur5e_shoulder_pan_joint"  />
+    <position name='ur5e_shoulder_lift' joint="ur5e_shoulder_lift_joint" />
+    <position name='ur5e_elbow'         joint="ur5e_elbow_joint"         />
+    <position name='ur5e_wrist_1'       joint="ur5e_wrist_1_joint"       />
+    <position name='ur5e_wrist_2'       joint="ur5e_wrist_2_joint"       />
+    <position name='ur5e_wrist_3'       joint="ur5e_wrist_3_joint"       /> -->
+
+    <!-- <position name='ur5e_shoulder_pan'  joint="ur5e_shoulder_pan_joint"  class="size3"/>
+    <position name='ur5e_shoulder_lift' joint="ur5e_shoulder_lift_joint" class="size3"/>
+    <position name='ur5e_elbow'         joint="ur5e_elbow_joint"         class="size3"/>
+    <position name='ur5e_wrist_1'       joint="ur5e_wrist_1_joint"       class="size1"/>
+    <position name='ur5e_wrist_2'       joint="ur5e_wrist_2_joint"       class="size1"/>
+    <position name='ur5e_wrist_3'       joint="ur5e_wrist_3_joint"       class="size1"/> -->
+
+    <!-- <plugin name="ur5e_shoulder_pan"  joint="ur5e_shoulder_pan_joint"  plugin="mujoco.pid" instance="shoulder_pan_joint_position_controller" />
+    <plugin name="ur5e_shoulder_lift" joint="ur5e_shoulder_lift_joint" plugin="mujoco.pid" instance="shoulder_lift_joint_position_controller" />
+    <plugin name="ur5e_elbow"         joint="ur5e_elbow_joint"         plugin="mujoco.pid" instance="elbow_joint_position_controller" />
+    <plugin name="ur5e_wrist_1"       joint="ur5e_wrist_1_joint"       plugin="mujoco.pid" instance="wrist_1_joint_position_controller" />
+    <plugin name="ur5e_wrist_2"       joint="ur5e_wrist_2_joint"       plugin="mujoco.pid" instance="wrist_2_joint_position_controller" />
+    <plugin name="ur5e_wrist_3"       joint="ur5e_wrist_3_joint"       plugin="mujoco.pid" instance="wrist_3_joint_position_controller" /> -->
+
+</mujocoinclude>
