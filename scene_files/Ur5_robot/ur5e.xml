@@ -47,8 +47,8 @@
     <mesh file="wrist2_1.obj"/>
     <mesh file="wrist2_2.obj"/>
     <mesh file="wrist3.obj"/>
-
-    <mesh file="gripper.obj"/>
+    <mesh name ="gripper" file="Tactile_probe.stl" scale= "1 1 1"/>
+    <!-- <mesh file="gripper.obj"/> -->
   </asset>
 
   <worldbody>
@@ -106,7 +106,10 @@
                   <geom class="eef_collision" pos="0 0.08 0" quat="1 1 0 0" size="0.04 0.02"/>
                   <!--site name="attachment_site" pos="0 0.1 0" quat="-1 1 0 0"/-->
                   <site name="UR/EE" pos="0 0 0" quat="0 1 0 1" type="sphere" rgba="135 211 124 1" size="1"/>
-                </body>
+                    <body name = "gripper" euler="-3.1415 -1.57 0" pos= "0 .1 0" >
+                          <geom type="mesh" mesh="gripper"/>
+                        </body>
+                    </body>
               </body>
             </body>
           </body>

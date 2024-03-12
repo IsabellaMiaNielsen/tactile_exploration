@@ -19,7 +19,7 @@
     <!--meshes-->
     <mesh name ="table" file="sigmund_table.obj" scale= "1 1 1"/>
     <mesh name ="pikachu" file="obj.obj" scale= ".007 .007 .007"/>
-    <mesh name ="gripper" file="gripper.obj" scale= "1000 1000 1000"/>
+    <!-- <mesh name ="gripper" file="Tactile_probe.stl" scale= "1 1 1"/> -->
     <!-- <mesh name ="wrist" file="wrist3.obj" scale= "1 1 1"/> -->
 
   </asset>
@@ -44,12 +44,17 @@
       <geom type="mesh" mesh="pikachu"/>
     </body>
 
-          <!--object -->
-    <body name = "gripper" euler="0 -1.57 -1.57" pos= "-.3 0 .75" >
-      <geom type="mesh" mesh="gripper"/>
-    </body>
 
-    
   </worldbody>
 
 </mujoco>
+          <!-- object -->
+    <!-- <body name = "gripper" euler="0 -1.57 -1.57" pos= "1 1 1" >
+      <geom type="mesh" mesh="gripper"/>
+      <geom type="cylinder" name="reference_frame_x" size="0.1 0.01" pos="0.05 0 0" rgba="1 0 0 1"/> <!-- X-axis marker -->
+      <geom type="cylinder" name="reference_frame_y" size="0.1 0.01" pos="0 0.05 0" rgba="0 1 0 1"/> <!-- Y-axis marker -->
+      <geom type="cylinder" name="reference_frame_z" size="0.1 0.01" pos="0 0 0.05" rgba="0 0 1 1"/> <!-- Z-axis marker -->
+    </body> -->
+
+    
+
