@@ -11,7 +11,7 @@
 	<asset>
 		<!-- ======= UR Assets ======= -->
     <include file="ur5e/ur5e_assets.xml"/>
-    <mesh name = "gripper" file="/home/nikolas/SDU_workspace/project_in_robotics/tactile_exploration/scene_files/assets/Tactile_probe.stl"/>
+    <mesh name = "gripper" file="assets/Tactile_probe.stl"/>
     
 	</asset>
 
