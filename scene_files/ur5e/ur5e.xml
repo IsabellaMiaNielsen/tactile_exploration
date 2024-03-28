@@ -82,6 +82,10 @@
       </body>
     </body>
   </worldbody>
+  <sensor>
+		<framepos objtype="body" objname="gripper" />
+		<force site="UR/EE" />
+  </sensor>
 
 	<actuator>
 		<!-- ======= UR actuators ======= -->

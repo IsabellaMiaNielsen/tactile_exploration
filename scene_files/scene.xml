@@ -43,5 +43,4 @@
       <geom type="mesh" mesh="pikachu"/>
     </body>
   </worldbody>
-
 </mujoco>
