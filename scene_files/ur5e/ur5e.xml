@@ -11,7 +11,7 @@
 	<asset>
 		<!-- ======= UR Assets ======= -->
     <include file="ur5e/ur5e_assets.xml"/>
-    <mesh name = "gripper" file="assets/Tactile_probe.stl"/>
+    <mesh name = "gripper" file="assets/probe.stl"/>
     
 	</asset>
 
@@ -82,7 +82,10 @@
       </body>
     </body>
   </worldbody>
-
+  <sensor>
+		<framepos objtype="body" objname="gripper" />
+		<force site="UR/EE" />
+  </sensor>
 	<actuator>
 		<!-- ======= UR actuators ======= -->
 		<include file="ur5e/ur5e_actuators.xml" />

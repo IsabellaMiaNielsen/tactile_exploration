@@ -8,6 +8,7 @@ import time
 import glfw
 from robot.robot_control import Robot
 from spatialmath import SE3
+from robot.Admittance_Controller_V3 import admittance
 
 class MJ:
   def __init__(self):
@@ -44,6 +45,8 @@ class MJ:
   def launch_mujoco(self):
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
       while viewer.is_running():
+        # print(self.d.sensordata)
+        
         step_start = time.time()
         with self._data_lock:
           mujoco.mj_step(self.m, self.d)
@@ -55,4 +58,4 @@ class MJ:
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
-  
+        print(admittance([0,0,4], self.robot))

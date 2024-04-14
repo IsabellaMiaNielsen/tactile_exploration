@@ -1,4 +1,5 @@
 from simulation.simulator import MJ
+# from robot.Admittance_Controller_V3 import admittance()
 # from simulation.data_query import Data_Query 
 # from robot.robot_control import Robot_Controler
 # from time import sleep
@@ -7,9 +8,14 @@ from simulation.simulator import MJ
 # from spatialmath import SE3
 # import transformations as tf
 
+
+
 def main() -> None:
-  sim = MJ()
+  sim = MJ()  
   sim.run()
+
+  
+
 
 if __name__ == "__main__":
   main()
