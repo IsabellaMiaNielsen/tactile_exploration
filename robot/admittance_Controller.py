@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 from robot.robot_control import Robot
 
 
-def admittance(target_force, robotTCP, sensordata):
+def admittance(target_force, robot:Robot):
 
     '''
     INPUTS:

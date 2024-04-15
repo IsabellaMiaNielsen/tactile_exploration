@@ -56,4 +56,4 @@ class MJ:
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
-        admittance([0,0,4], self.robot)
+        # admittance([0,0,4], self.robot)
