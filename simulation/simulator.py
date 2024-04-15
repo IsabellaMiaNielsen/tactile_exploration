@@ -8,8 +8,8 @@ import time
 import glfw
 from robot.robot_control import Robot
 from spatialmath import SE3
-from robot.admittance_Controller import admittance
-
+# from robot.admittance_Controller import admittance
+from utils import utility
 class MJ:
   def __init__(self):
     self.m = mujoco.MjModel.from_xml_path('scene_files/scene.xml')
@@ -43,7 +43,7 @@ class MJ:
       print("ee pose = \n", self.robot.get_ee_pose())
 
     if key ==  glfw.KEY_F:
-      print("Force: ", self.d.sensordata)
+      print("Force: ", utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu'))#self.d.sensordata)
 
     if key == glfw.KEY_A:
       # Align to force

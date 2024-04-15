@@ -40,7 +40,7 @@
 
       <!--object -->
     <body name = "pikachu" euler="0 -1.57 -1.57" pos= "-.3 0 .735" >
-      <geom type="mesh" mesh="pikachu"/>
+      <geom  name = "pikachu_" type="mesh" mesh="pikachu"/>
     </body>
   </worldbody>
 </mujoco>
