@@ -39,6 +39,12 @@ class MJ:
     if key == glfw.KEY_COMMA:
       self.robot.home()
 
+    if key == glfw.KEY_T:
+      self.robot.touch()
+
+    if key == glfw.KEY_D:
+      self.robot.direct_touch()
+
     if key == glfw.KEY_PERIOD:
       print("ee pose = \n", self.robot.get_ee_pose())
 
@@ -51,11 +57,11 @@ class MJ:
       print("current pose: ", pose)
       r = utility.directionToNormal(
         pose.R,
-        self.d.sensordata[:3]  
+        utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')[:3]
       )
       rotated_pose = SE3.Rt(r, pose.t)
       print("changed pose: ", rotated_pose)
-      self.robot.set_ee_pose_compared(rotated_pose)
+      self.robot.set_ee_pose(rotated_pose)
 
   def launch_mujoco(self):
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
