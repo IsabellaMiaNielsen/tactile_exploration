@@ -25,7 +25,10 @@ class Robot:
         self._m = m
         self._d = d
 
-        self._HOME = [np.pi, -np.pi/2.0, np.pi/2.0, -np.pi/2.0, -np.pi/2.0, 0.0]
+        self._HOME = [-np.pi, -np.pi/2.0, np.pi/2.0, -np.pi/2.0, -np.pi/2.0, 0.0]
+        self._TOUCH = [-2.86, -1.29, 1.67, -1.57, -1.57, 0]
+        self._DIRECT_TOUCH = [-3.02, -1.57, 2.11, -2.07, -1.57, 0]
+        self._UP = [0, 0, 0, 0, 0, 0]
 
     def get_robot(self):
         return self.robot
@@ -45,7 +48,7 @@ class Robot:
 
     def invKin(self, desiredTCP):
           # IKSolution contians q, success, iteration, searches, residual
-          ik_sol: IKSolution = self.robot.ikine_LM(desiredTCP, self.get_q)
+          ik_sol: IKSolution = self.robot.ikine_LM(desiredTCP, self.get_q())
           return ik_sol.q
     
     def get_q(self) -> list[float]:
@@ -57,6 +60,15 @@ class Robot:
 
     def home(self) -> None:
         self.set_q(q=self._HOME)
+
+    def up(self) -> None:
+        self.set_q(q=self._UP)
+
+    def touch(self) -> None:
+        self.set_q(q=self._TOUCH)
+
+    def direct_touch(self) -> None:
+        self.set_q(q=self._DIRECT_TOUCH)
 
     def set_ee_pose(self, T: SE3):
         q = self.invKin(T)
