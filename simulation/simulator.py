@@ -45,6 +45,9 @@ class MJ:
     if key == glfw.KEY_D:
       self.robot.direct_touch()
 
+    if key == glfw.KEY_U:
+      self.robot.up()
+
     if key == glfw.KEY_PERIOD:
       print("ee pose = \n", self.robot.get_ee_pose())
 

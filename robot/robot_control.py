@@ -28,6 +28,7 @@ class Robot:
         self._HOME = [-np.pi, -np.pi/2.0, np.pi/2.0, -np.pi/2.0, -np.pi/2.0, 0.0]
         self._TOUCH = [-2.86, -1.29, 1.67, -1.57, -1.57, 0]
         self._DIRECT_TOUCH = [-3.02, -1.57, 2.11, -2.07, -1.57, 0]
+        self._UP = [0, 0, 0, 0, 0, 0]
 
     def get_robot(self):
         return self.robot
@@ -59,6 +60,9 @@ class Robot:
 
     def home(self) -> None:
         self.set_q(q=self._HOME)
+
+    def up(self) -> None:
+        self.set_q(q=self._UP)
 
     def touch(self) -> None:
         self.set_q(q=self._TOUCH)
