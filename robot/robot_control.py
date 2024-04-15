@@ -96,3 +96,11 @@ class Robot:
 
     def get_ee_pose(self) -> SE3:
         return self.forKin(self.get_q())
+    
+    def get_rotation(self):
+        matrix = np.array(self.get_ee_pose())
+        return matrix[:3, :3]
+    
+    def get_pose(self):
+        matrix = np.array(self.get_ee_pose())
+        return matrix[:-1, -1].reshape(-1)

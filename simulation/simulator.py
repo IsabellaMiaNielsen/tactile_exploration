@@ -8,6 +8,7 @@ import time
 import glfw
 from robot.robot_control import Robot
 from spatialmath import SE3
+from robot.admittance_Controller import admittance
 
 class MJ:
   def __init__(self):
@@ -55,4 +56,4 @@ class MJ:
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
-  
+        admittance([0,0,4], self.robot)
