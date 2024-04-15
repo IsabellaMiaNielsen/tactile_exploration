@@ -3,9 +3,10 @@
 import numpy as np
 from scipy.spatial.transform import Rotation
 from robot.robot_control import Robot
+from utils import utility
 
 class Admitance:
-    def __init__(self, target_force, robot:Robot, dt):
+    def __init__(self, target_force, wrench, curent_TCP, model_data, dt):
 
         '''
         INPUTS:
@@ -19,9 +20,12 @@ class Admitance:
         RETUNS:
         Xc = desired end effector position based on controller response to external force (surface normal) in TOOL FRAME
         '''
-        self.robot = robot
+        self.link_masses = [3.761, 8.058, 2.846, 1.37, 1.3, 0.365]
+        self.model_data = model_data
+        self.wrench = wrench
         self.dt = dt
-        m1 = 1
+        self.current_TCP = curent_TCP
+        self.m1 = 1
         m2 = 1
         m3 = 3
         k1 = 1
@@ -32,22 +36,18 @@ class Admitance:
         kd1 = 2*np.sqrt(m1*(k1+kenv1))
         kd2 = 2*np.sqrt(m2*(k2+kenv2))
         dt = 0.002 #Based on the control loop of the robot (given by simulation). 1/500 in real UR5 environment. 
-
-        M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
         
-
-        K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero
+        self.M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
         
+        self.K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero        
         
-        D_prev = np.array([[kd1,0,0],[0,kd2,0],[0,0,k3]])
-
-        
+        self.D_prev = np.array([[kd1,0,0],[0,kd2,0],[0,0,k3]])
 
         #Initial conditions:
         self.velx = 0
         self.vely = 0
         self.velz = 0
-        self.Xc = robot.get_pose()
+        self.Xc = utility._get_pose_from_tran(self.current_TCP)
 
 
         first_iteration = True
@@ -58,22 +58,21 @@ class Admitance:
         self.wrench = [0,0,0]
         # Controller Loop
         
-        self.force = get_contact_force()
         self.probe_in_contact = False
         self.target_force = target_force
 
-    def admitance(self, pobe_in_contact):
+    def admitance(self, pobe_in_contact, wrench, current_TCP, model_data):
         if pobe_in_contact :  # You need some condition to break the loop
 
-            wrench = self.robot._d.sensordata[:3] #only forces
-            TCP_R = self.robot.get_rotation()
+            self.wrench = wrench #only forces
+            self.TCP_R = utility._get_rotation_from_tran(current_TCP)
             print(wrench)
 
-            rot_align = (self.directionToNormal(TCP_R, wrench))
+            rot_align = (self.directionToNormal(self.TCP_R, wrench))
 
-            M = rot_align @ M_prev #update gains based on orientation function
-            K = rot_align @ K_prev
-            D = rot_align @ D_prev
+            M = rot_align @ self.M_prev #update gains based on orientation function
+            K = rot_align @ self.K_prev
+            D = rot_align @ self.D_prev
 
             
             # M = M_prev #update gains based on orientation function
@@ -96,9 +95,9 @@ class Admitance:
             print("Type of D:", D)
             print("Type of M:", M)
 
-            accx = np.linalg.inv(M) @ (wrench + self.target_force - D @ velx - K @ pos_error[0])
-            accy = np.linalg.inv(M) @ (wrench + self.target_force - D @ vely - K @ pos_error[1])
-            accz = np.linalg.inv(M) @ (wrench + self.target_force - D @ velz - K @ pos_error[2])
+            accx = np.linalg.inv(self.m1) @ (wrench[0] + self.target_force - D @ velx - K @ pos_error[0])
+            accy = np.linalg.inv(self.m1) @ (wrench[1] + self.target_force - D @ vely - K @ pos_error[1])
+            accz = np.linalg.inv(self.m1) @ (wrench[2] + self.target_force - D @ velz - K @ pos_error[2])
             
             # Step 2: Integrate acceleration to get velocity
             velx = self.int_acc(accx, velx, self.dt)
@@ -218,7 +217,29 @@ class Admitance:
         R = np.dot(Rz, np.dot(Ry, Rx))
         
         return R
+    def get_inertial(self, inertialValues, COM_data):
+        i_matrix = np.zeros((6, 6))
+        for i in range(6):
+            current_matrix = np.zeros((6,6))
+            Ii = np.zeros((3,3))
+            Ii[0,0] = inertialValues[i]
+            Ii[1,1] = i + 1
+            Ii[2,2] = i + 2
 
-    if __name__ == "__main__":
+            poseVector = np.array([COM_data[i,0], COM_data[i,1], COM_data[i,2]])
 
-        print('...')
+            skew_matrix = np.array([
+            [0, -poseVector[2], poseVector[1]],
+            [poseVector[2], 0, -poseVector[0]],
+            [-poseVector[1], poseVector[0], 0]
+             ])
+
+            mi_ri = skew_matrix * self.link_masses[i]
+            identity_matrix = np.eye(3) * self.link_masses[i]
+
+            current_matrix[:3, :3] = Ii
+            current_matrix[:3, 3:] = mi_ri.T
+            current_matrix[3:, :3] = mi_ri
+            current_matrix[3:, 3:] = identity_matrix
+
+            i_matrix = i_matrix + current_matrix

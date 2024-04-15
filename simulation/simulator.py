@@ -8,7 +8,7 @@ import time
 import glfw
 from robot.robot_control import Robot
 from spatialmath import SE3
-# from robot.admittance_Controller import admittance
+from robot.admittance_Controller import Admitance
 from utils import utility
 class MJ:
   def __init__(self):
@@ -59,6 +59,8 @@ class MJ:
 
   def launch_mujoco(self):
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
+      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+      controller = Admitance(target_force = 1, wrench=wrench, curent_TCP=self.robot.get_ee_pose(), model_data=self.d, dt=0.002)
       while viewer.is_running():
         # print(self.d.sensordata)
         
@@ -73,4 +75,5 @@ class MJ:
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
-        # admittance([0,0,4], self.robot)
+        wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+        

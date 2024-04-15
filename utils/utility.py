@@ -50,3 +50,11 @@ def _get_cs(model: mj.MjModel, data: mj.MjData, i: int) -> list[float]:
     c_array = np.zeros(6, dtype=np.float64)
     mj.mj_contactForce(model, data, i, c_array)
     return c_array
+
+def _get_rotation_from_tran(ee_tran):
+    matrix = np.array(ee_tran)
+    return matrix[:3, :3]
+
+def _get_pose_from_tran(ee_tran):
+    matrix = np.array(ee_tran)
+    return matrix[:-1, -1].reshape(-1)
