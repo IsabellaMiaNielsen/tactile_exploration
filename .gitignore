@@ -9,3 +9,6 @@ gp/__pycache__/DataLoader.cpython-311.pyc
 gp/__pycache__/GP_Regressor.cpython-311.pyc
 gp/__pycache__/Visualization.cpython-311.pyc
 gp/__pycache__/Visualizer.cpython-311.pyc
+__pycache__/
+.py[cod]
+.pyc

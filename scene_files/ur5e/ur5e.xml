@@ -86,6 +86,10 @@
 		<framepos objtype="body" objname="gripper" />
 		<force site="UR/EE" />
   </sensor>
+<<<<<<< HEAD
+=======
+
+>>>>>>> e6543e263e360e6ff6d02b5a755ac2a17274547b
 	<actuator>
 		<!-- ======= UR actuators ======= -->
 		<include file="ur5e/ur5e_actuators.xml" />
