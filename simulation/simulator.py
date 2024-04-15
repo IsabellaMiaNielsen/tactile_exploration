@@ -43,7 +43,7 @@ class MJ:
       print("ee pose = \n", self.robot.get_ee_pose())
 
     if key ==  glfw.KEY_F:
-      print("Force: ", self.d.sensordata)
+      print("Force: ", utility._get_contact_info(model=self.m, data=self.d, actor="gripper", obj="pikachu"))#self.d.sensordata)
 
     if key == glfw.KEY_A:
       # Align to force
