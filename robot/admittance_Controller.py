@@ -108,6 +108,7 @@ class Admitance:
             Xcy = Xez + Xd[1]
             Xcz = Xey + Xd[2]
             self.Xc = [Xcx, Xcy, Xcz]
+            
             self.first_iteration = False
             # Exit condition in case force readings are lower than a threshold (contact lost)
             # if wrench >= [0,0,0]:
