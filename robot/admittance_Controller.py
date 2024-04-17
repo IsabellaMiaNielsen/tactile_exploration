@@ -81,12 +81,12 @@ class Admitance:
             # D = D_prev
             
             # Step 1: Calculate acceleration
-            Xd = np.copy(Xc) + np.array([0.01, 0.01, 0])
+            Xd = np.copy(self.Xc) + np.array([0.01, 0.01, 0])
 
             if self.first_iteration:
-                Xd = Xc
+                Xd = self.Xc
             
-            pos_error = Xc - Xd
+            pos_error = self.Xc - Xd
             
             print("Type of wrench:", wrench)
             print("Type of target force:", self.target_force)
@@ -114,12 +114,12 @@ class Admitance:
             Xcx = Xex + Xd[0]
             Xcy = Xez + Xd[1]
             Xcz = Xey + Xd[2]
-            Xc = [Xcx, Xcy, Xcz]
+            self.Xc = [Xcx, Xcy, Xcz]
             self.first_iteration = False
             # Exit condition in case force readings are lower than a threshold (contact lost)
             # if wrench >= [0,0,0]:
             #     break
-        return self.tool_to_base(Xc)
+        return self.tool_to_base(self.Xc)
 
 
     def int_acc(acc, vel, dt):
