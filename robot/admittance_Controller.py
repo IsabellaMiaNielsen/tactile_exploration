@@ -33,21 +33,15 @@ class Admitance:
         dt = 0.002 #Based on the control loop of the robot (given by simulation). 1/500 in real UR5 environment. 
 
         self.M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
-        
-
         self.K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero
-        
-        
         self.D_prev = np.array([[kd1,0,0],[0,kd2,0],[0,0,k3]])
 
         
-
         #Initial conditions:
         self.velx = 0
         self.vely = 0
         self.velz = 0
         self.Xc = robot.get_pose()
-
 
         self.first_iteration = True
         
@@ -75,7 +69,6 @@ class Admitance:
             K = rot_align @ self.K_prev
             D = rot_align @ self.D_prev
 
-            
             # M = M_prev #update gains based on orientation function
             # K = K_prev
             # D = D_prev
