@@ -6,7 +6,6 @@ from robot.robot_control import Robot
 
 class Admitance:
     def __init__(self, target_force, robot:Robot, dt):
-
         '''
         INPUTS:
             target_force -> force to push against object (around 4N)
@@ -17,7 +16,7 @@ class Admitance:
             current_vel
         
         RETUNS:
-        Xc = desired end effector position based on controller response to external force (surface normal) in TOOL FRAME
+            Xc = desired end effector position based on controller response to external force (surface normal) in TOOL FRAME
         '''
         self.robot = robot
         self.dt = dt
@@ -33,13 +32,13 @@ class Admitance:
         kd2 = 2*np.sqrt(m2*(k2+kenv2))
         dt = 0.002 #Based on the control loop of the robot (given by simulation). 1/500 in real UR5 environment. 
 
-        M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
+        self.M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
         
 
-        K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero
+        self.K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero
         
         
-        D_prev = np.array([[kd1,0,0],[0,kd2,0],[0,0,k3]])
+        self.D_prev = np.array([[kd1,0,0],[0,kd2,0],[0,0,k3]])
 
         
 
@@ -50,17 +49,18 @@ class Admitance:
         self.Xc = robot.get_pose()
 
 
-        first_iteration = True
+        self.first_iteration = True
         
         self.Xex = 0
         self.Xey = 0
         self.Xez = 0
         self.wrench = [0,0,0]
+
         # Controller Loop
-        
-        self.force = get_contact_force()
+        self.force = 5 # set it to 5N
         self.probe_in_contact = False
         self.target_force = target_force
+
 
     def admitance(self, pobe_in_contact):
         if pobe_in_contact :  # You need some condition to break the loop
@@ -71,9 +71,9 @@ class Admitance:
 
             rot_align = (self.directionToNormal(TCP_R, wrench))
 
-            M = rot_align @ M_prev #update gains based on orientation function
-            K = rot_align @ K_prev
-            D = rot_align @ D_prev
+            M = rot_align @ self.M_prev #update gains based on orientation function
+            K = rot_align @ self.K_prev
+            D = rot_align @ self.D_prev
 
             
             # M = M_prev #update gains based on orientation function
@@ -83,7 +83,7 @@ class Admitance:
             # Step 1: Calculate acceleration
             Xd = np.copy(Xc) + np.array([0.01, 0.01, 0])
 
-            if first_iteration:
+            if self.first_iteration:
                 Xd = Xc
             
             pos_error = Xc - Xd
@@ -115,7 +115,7 @@ class Admitance:
             Xcy = Xez + Xd[1]
             Xcz = Xey + Xd[2]
             Xc = [Xcx, Xcy, Xcz]
-            first_iteration = False
+            self.first_iteration = False
             # Exit condition in case force readings are lower than a threshold (contact lost)
             # if wrench >= [0,0,0]:
             #     break
