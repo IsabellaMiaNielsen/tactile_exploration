@@ -45,6 +45,9 @@ class MJ:
     if key == glfw.KEY_D:
       self.robot.direct_touch()
 
+    if key == glfw.KEY_B:
+      self.robot.back_touch()
+
     if key == glfw.KEY_U:
       self.robot.up()
 
@@ -62,6 +65,42 @@ class MJ:
         pose.R,
         utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')[:3]
       )
+      rotated_pose = SE3.Rt(r, pose.t)
+      print("changed pose: ", rotated_pose)
+      self.robot.set_ee_pose(rotated_pose)
+
+    if key == glfw.KEY_UP:
+      # Align to force
+      pose = self.robot.get_ee_pose()
+      print("current pose: ", pose)
+      r = utility.directionToNormal(
+        pose.R,
+        [0, 0, 1]
+      )
+      rotated_pose = SE3.Rt(r, pose.t)
+      print("changed pose: ", rotated_pose)
+      self.robot.set_ee_pose(rotated_pose)
+
+    if key == glfw.KEY_LEFT:
+      # Align to force
+      pose = self.robot.get_ee_pose()
+      print("current pose: ", pose)
+      r = utility.directionToNormal(
+        pose.R,
+        [1, 0, 0]
+      )
+      rotated_pose = SE3.Rt(r, pose.t)
+      print("changed pose: ", rotated_pose)
+      self.robot.set_ee_pose(rotated_pose)
+
+    if key == glfw.KEY_RIGHT:
+      # Align to force
+      pose = self.robot.get_ee_pose()
+      print("current pose: ", pose)
+      r = utility.directionToNormal(
+        pose.R,
+        force=[0, 1, 0]
+        )
       rotated_pose = SE3.Rt(r, pose.t)
       print("changed pose: ", rotated_pose)
       self.robot.set_ee_pose(rotated_pose)

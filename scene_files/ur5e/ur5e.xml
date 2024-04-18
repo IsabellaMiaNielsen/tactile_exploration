@@ -71,7 +71,7 @@
                   <!-- <site name="attachment_site" pos="0 0.1 0" quat="-1 1 0 0"/> -->
                   <site name="UR/EE" pos="0 0 0" quat="0 1 0 1" type="sphere" rgba="135 211 124 1" size="1"/>
                     <body name = "gripper" euler="-1.5708 0 0" pos= "0 .1 0" >
-                          <geom name = "gripper_" type="mesh" mesh="gripper"/>
+                          <geom name = "gripper_" type="mesh" condim="3" mesh="gripper"  solimp="0.09 0.95 0.001 0.5 2"/>
                         
                     </body>
                 </body>
