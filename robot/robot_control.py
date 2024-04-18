@@ -26,7 +26,7 @@ class Robot:
         self._d = d
 
         self._HOME = [-np.pi, -np.pi/2.0, np.pi/2.0, -np.pi/2.0, -np.pi/2.0, 0.0]
-        self._TOUCH = [-2.86, -1.29, 1.67, -1.57, -1.57, 0]
+        self._TOUCH = [-3.00, -1.38, 1.79, -1.57, -1.57, 0]
         self._DIRECT_TOUCH = [-3.02, -1.57, 2.11, -2.07, -1.57, 0]
         self._UP = [0, 0, 0, 0, 0, 0]
 
