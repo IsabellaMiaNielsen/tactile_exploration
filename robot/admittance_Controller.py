@@ -33,11 +33,11 @@ class Admitance:
         k3 = 3
         kenv1 = 10 #set by user depending on current object to be reconstructed
         kenv2 = 10
-        kd1 = 2*np.sqrt(m1*(k1+kenv1))
+        kd1 = 2*np.sqrt(self.m1*(k1+kenv1))
         kd2 = 2*np.sqrt(m2*(k2+kenv2))
         dt = 0.002 #Based on the control loop of the robot (given by simulation). 1/500 in real UR5 environment. 
         
-        self.M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
+        self.M_prev = np.array([[self.m1,0,0],[0,m2,0],[0,0,m3]])
         
         self.K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero        
         

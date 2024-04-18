@@ -18,7 +18,7 @@
 
     <!--meshes-->
     <mesh name ="table" file="assets/sigmund_table.obj" scale= "1 1 1"/>
-    <mesh name ="pikachu" file="assets/cube.stl" scale= "1 1 1"/>
+    <mesh name ="pikachu" file="assets/rounded_cube.stl" scale= "1 1 1"/>
     <!-- <mesh name ="wrist" file="wrist3.obj" scale= "1 1 1"/> -->
 
   </asset>
