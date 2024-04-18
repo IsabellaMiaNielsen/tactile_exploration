@@ -18,7 +18,7 @@ class Admitance:
             current_vel
         
         RETUNS:
-        Xc = desired end effector position based on controller response to external force (surface normal) in TOOL FRAME
+            Xc = desired end effector position based on controller response to external force (surface normal) in TOOL FRAME
         '''
         self.link_masses = [3.761, 8.058, 2.846, 1.37, 1.3, 0.365]
         self.model_data = model_data
@@ -49,13 +49,13 @@ class Admitance:
         self.velz = 0
         self.Xc = utility._get_pose_from_tran(self.current_TCP)
 
-
-        first_iteration = True
+        self.first_iteration = True
         
         self.Xex = 0
         self.Xey = 0
         self.Xez = 0
         self.wrench = [0,0,0]
+
         # Controller Loop
         
         self.probe_in_contact = False
@@ -74,18 +74,17 @@ class Admitance:
             K = rot_align @ self.K_prev
             D = rot_align @ self.D_prev
 
-            
             # M = M_prev #update gains based on orientation function
             # K = K_prev
             # D = D_prev
             
             # Step 1: Calculate acceleration
-            Xd = np.copy(Xc) + np.array([0.01, 0.01, 0])
+            Xd = np.copy(self.Xc) + np.array([0.01, 0.01, 0])
 
-            if first_iteration:
-                Xd = Xc
+            if self.first_iteration:
+                Xd = self.Xc
             
-            pos_error = Xc - Xd
+            pos_error = self.Xc - Xd
             
             print("Type of wrench:", wrench)
             print("Type of target force:", self.target_force)
@@ -113,12 +112,13 @@ class Admitance:
             Xcx = Xex + Xd[0]
             Xcy = Xez + Xd[1]
             Xcz = Xey + Xd[2]
-            Xc = [Xcx, Xcy, Xcz]
-            first_iteration = False
+            self.Xc = [Xcx, Xcy, Xcz]
+            
+            self.first_iteration = False
             # Exit condition in case force readings are lower than a threshold (contact lost)
             # if wrench >= [0,0,0]:
             #     break
-        return self.tool_to_base(Xc)
+        return self.tool_to_base(self.Xc)
 
 
     def int_acc(acc, vel, dt):

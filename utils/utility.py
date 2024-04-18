@@ -12,11 +12,11 @@ def directionToNormal(TCP_R, force):
     if force[0] == 0 and force[1] == 0 and force[2] == 0:
         print("We are not in contact. Nothing to align to.")
         return TCP_R
-    force = [np.abs(force[1]), np.abs(force[2]), np.abs(force[0])]
+    force = [np.abs(force[0]), np.abs(force[1]), np.abs(force[2])]
     force_norm = force / np.linalg.norm(force) # Normalize the force vector to be unit
-    z_axis = np.atleast_2d([0, 0, 1]) # Axis to align with
+    z_axis = np.atleast_2d([0, 1, 0]) # Axis to align with
     rot = Rotation.align_vectors(z_axis, [force_norm])[0] # Align force to z axis
-    return rot.as_matrix() @ TCP_R # New rotation matrix the robot should have to be aligned. 
+    return rot.as_matrix() @ Rotation.from_matrix([[1, 0, 0], [0, -1, 0], [0, 0, -1]]).as_matrix() # New rotation matrix the robot should have to be aligned. 
 
 
 def _get_contact_info(model: mj.MjModel, data: mj.MjData, actor:str, obj:str) -> np.ndarray:
