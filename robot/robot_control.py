@@ -30,6 +30,7 @@ class Robot:
         self._DIRECT_TOUCH = [-3.02, -1.57, 2.11, -2.07, -1.57, 0]
         self._UP = [0, 0, 0, 0, 0, 0]
         self._BACK_TOUCH = [-2.92, -0.66, 1.15, -0.785, -1.6, 0]
+        self._SIDE_TOUCH = [-2.4399, -0.785453, 1.37695, -0.699149, -2.419, -2.2732]
 
     def get_robot(self):
         return self.robot
@@ -70,6 +71,9 @@ class Robot:
 
     def back_touch(self) -> None:
         self.set_q(q=self._BACK_TOUCH)
+
+    def side_touch(self) -> None:
+        self.set_q(q=self._SIDE_TOUCH)
 
     def direct_touch(self) -> None:
         self.set_q(q=self._DIRECT_TOUCH)

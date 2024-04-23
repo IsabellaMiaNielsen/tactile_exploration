@@ -48,6 +48,9 @@ class MJ:
     if key == glfw.KEY_B:
       self.robot.back_touch()
 
+    if key == glfw.KEY_S:
+      self.robot.side_touch()
+
     if key == glfw.KEY_U:
       self.robot.up()
 
