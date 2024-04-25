@@ -29,9 +29,10 @@ def _get_contact_info(model: mj.MjModel, data: mj.MjData, actor:str, obj:str) ->
 
     if is_in_contact:
         wrench = _get_cs(model=model, data=data, i=cs_i)
-        contact_frame = data.contact[cs_i].frame.reshape((3, 3))
-        rot = Rotation.from_matrix(contact_frame)
-        print("contact frame: ", rot.as_euler("XYZ", degrees=True))
+        contact_frame = data.contact[cs_i].frame.reshape((3, 3)).T
+        #rot = Rotation.from_matrix(contact_frame)
+        #print("contact frame: ", contact_frame)#rot.as_euler("XYZ", degrees=True))
+        #print(wrench[:3])
         return contact_frame @ wrench[:3]
     else:
         return np.zeros(6, dtype=np.float64)

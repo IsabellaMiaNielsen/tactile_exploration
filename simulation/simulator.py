@@ -15,7 +15,7 @@ class MJ:
     self.m = mujoco.MjModel.from_xml_path('scene_files/scene.xml')
     self.d = mujoco.MjData(self.m)
     self._data_lock = Lock()
-    self.robot = Robot(m=self.m,d=self.d)
+    self.robot = Robot(m=self.m, d=self.d)
     
   def run(self) -> None:
     self.th = Thread(target=self.launch_mujoco, daemon=True)
@@ -27,9 +27,13 @@ class MJ:
   def key_cb(self, key):
     """
     Function for debugging. 
-    space should make the robot stay where it is
-    , takes the robot to home position
-    . prints the end effector pose
+    space should make the robot stay where it is,
+    , takes the robot to home position,
+    . prints the end effector pose, 
+    t touches the top,
+    d touches the top directly,
+    s touches the side,
+    b touches the back
     """
     if key == glfw.KEY_SPACE:
       T_curr = self.robot.get_ee_pose()
@@ -63,12 +67,15 @@ class MJ:
     if key == glfw.KEY_A:
       # Align to force
       pose = self.robot.get_ee_pose()
+      force = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
       print("current pose: ", pose)
+      
       r = utility.directionToNormal(
         pose.R,
-        utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')[:3]
+        force
       )
       rotated_pose = SE3.Rt(r, pose.t)
+
       print("changed pose: ", rotated_pose)
       self.robot.set_ee_pose(rotated_pose)
 
