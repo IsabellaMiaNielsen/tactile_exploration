@@ -22,18 +22,18 @@ class DataLoader:
 
         Parameters
         ----------
-        path (str): The file path to the point cloud file
-        d_pos (float or int): Used as step size variable to initialize points inside of the surface
-        d_neg (float or int): Used as step size variable to initialize points outside of the surface
+            path (str): The file path to the point cloud file
+            d_pos (float or int): Used as step size variable to initialize points inside of the surface
+            d_neg (float or int): Used as step size variable to initialize points outside of the surface
 
         Returns
         -------
-        X_train (ndarray): Training data consists of points outside, inside and on the surface
-        y_train (ndarray): Refers to the values of the implicit function.
-            Assigns y(x) = +1 to points inside the surface
-            Assigns y(x) = -1 to points outside the surface
-            Assigns y(x) = 0 to points on the surface
-        point_cloud (ndarray): Point cloud consisting of only the x, y and z position of the points
+            X_train (ndarray): Training data consists of points outside, inside and on the surface
+            y_train (ndarray): Refers to the values of the implicit function.
+                Assigns y(x) = +1 to points inside the surface
+                Assigns y(x) = -1 to points outside the surface
+                Assigns y(x) = 0 to points on the surface
+            point_cloud (ndarray): Point cloud consisting of only the x, y and z position of the points
         """
         point_list = np.loadtxt(path)
         point_cloud = point_list[:, :3]
@@ -89,7 +89,6 @@ class DataLoader:
 
 
 
-
         # Follow the normal vector to create training data inside the original surface:
         points_in = point_list[:, :3] - d_pos * point_list[:, 3:6]
 
@@ -101,6 +100,7 @@ class DataLoader:
         X_train = np.vstack((point_cloud, points_in, points_out, points_out2, points_below))
         y_train = np.hstack((fzero, fone, fminus, fminus, fminus_below))  # flattening is required to avoid errors
         return X_train, y_train, point_cloud
+    
 
     @staticmethod
     def generate_Xstar(minx, maxx, miny, maxy, minz, maxz, resolution):
@@ -110,12 +110,12 @@ class DataLoader:
         
         Parameters
         ----------
-        min, max (float64): Defines the evaluation limits of the implicit funciton predicted by the GP Regressor
-        resolution (int): Distance between the sample points. resolution > 20 leads to RAM problems
+            min, max (float64): Defines the evaluation limits of the implicit funciton predicted by the GP Regressor
+            resolution (int): Distance between the sample points. resolution > 20 leads to RAM problems
 
         Returns
         -------
-        Xstar (ndarray): Refers to the grid of points between the min and max evaluation limits
+            Xstar (ndarray): Refers to the grid of points between the min and max evaluation limits
         """
         x = np.linspace(minx, maxx, resolution)
         y = np.linspace(miny, maxy, resolution)
@@ -128,6 +128,7 @@ class DataLoader:
         Xstar = np.pad(Xstar, ((0, desired_size**3 - Xstar.shape[0]), (0, 0)), mode='constant')
         return Xstar
 
+
     @staticmethod
     def min_max_bunny(X_train):
         """
@@ -138,6 +139,7 @@ class DataLoader:
         minz, maxz = np.min(X_train[:, 2]), np.max(X_train[:, 2])
         return minx, maxx, miny, maxy, minz, maxz
 
+
     @staticmethod
     def min_max_rectangle():
         """
@@ -147,3 +149,4 @@ class DataLoader:
         miny, maxy = -2, 6
         minz, maxz = 0, 7
         return minx, maxx, miny, maxy, minz, maxz
+    

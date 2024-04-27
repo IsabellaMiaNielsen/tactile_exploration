@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import brentq
-from Utils.Visualizer import Visualizer as Visu
+from utils.visualizer import Visualizer as Visu
 
 ######################################################################################################
 # DataAnalyzer Class for 
@@ -19,15 +19,15 @@ class DataAnalyzer:
 
         Parameters
         ----------
-        X_train (ndarray): Training data consists of points outside, inside and on the surface
-        y_train (ndarray): Refers to the values of the implicit function.
-            Assigns y(x) = +1 to points inside the surface
-            Assigns y(x) = -1 to points outside the surface
-            Assigns y(x) = 0 to points on the surface
-        Xstar (ndarray): Refers to the grid of points between the min and max evaluation limits
-        gp_regressor (class GP_Regressor): Is an instance of the GP_Regressor class that represents the GP regressor fitted to the training data. 
-        mu_s (ndarray): Array containing the predicted mean by the GP regressor for each point in Xstar
-        cov_s (ndarray): Covariance matrix
+            X_train (ndarray): Training data consists of points outside, inside and on the surface
+            y_train (ndarray): Refers to the values of the implicit function.
+                Assigns y(x) = +1 to points inside the surface
+                Assigns y(x) = -1 to points outside the surface
+                Assigns y(x) = 0 to points on the surface
+            Xstar (ndarray): Refers to the grid of points between the min and max evaluation limits
+            gp_regressor (class GP_Regressor): Is an instance of the GP_Regressor class that represents the GP regressor fitted to the training data. 
+            mu_s (ndarray): Array containing the predicted mean by the GP regressor for each point in Xstar
+            cov_s (ndarray): Covariance matrix
         """
         self.X_train = X_train
         self.y_train = y_train
@@ -75,7 +75,7 @@ class DataAnalyzer:
         
         Parameters
         ----------
-        above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
+            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
         """
         if above_ground:
             # Filter out zero-crossing points with z value <= 0.0
@@ -101,8 +101,8 @@ class DataAnalyzer:
 
         Parameters
         ----------
-        plot_uncertainties (bool): Flag indicating whether to visualize uncertainties after updating the model.
-        above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
+            plot_uncertainties (bool): Flag indicating whether to visualize uncertainties after updating the model.
+            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
         """
         self.get_uncertainties_at_zero_crossings()
         self.find_max_uncertainty_coordinates(above_ground)
@@ -114,44 +114,36 @@ class DataAnalyzer:
             Visu.plot_uncertainties_3D(self.zero_crossings_x, self.zero_crossings_y, self.zero_crossings_z, self.unc_at_zero_crossings)
 
 
-    def update_with_new_point(self, new_p, plot_uncertainties = False, above_ground = False):
+    def update_with_new_point(self, new_p, d_outside = 0.04, d_inside = 0.04, plot_uncertainties = False, above_ground = False):
         """
         Update the GP regressor model with a new point or points for decreasing the uncertainty at that point/region.
 
         Parameters
         ----------
-        new_p (ndarray): New point or array of new points to add to the training data. Each point consists of the coordinates (x, y, z) and the normal vector (nx, ny, nz).
-        plot_uncertainties (bool): Flag indicating whether to visualize uncertainties after updating the model.
-        above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
+            new_p (ndarray): New point or array of new points to add to the training data. Each point consists of the coordinates (x, y, z) and the normal vector (nx, ny, nz).
+            d_outside (float): Step size variable for initializing points outside of the surface.
+            d_inside (float): Step size variable for initializing points inside of the surface.
+            plot_uncertainties (bool): Flag indicating whether to visualize uncertainties after updating the model.
+            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
         """
-        d_neg = 1
-        # d_pos = 1
-
         if new_p.ndim == 1:
             # Follow the normal vector to create training data outside the original surface:
-            points_out = new_p[:3] + d_neg * new_p[3:6]
-            points_out2 = new_p[:3] + 2 * d_neg * new_p[3:6]
-            fminus = -1 * d_neg  # assign y(x) = -1 to the points outside the surface
+            points_out = new_p[:3] + d_outside * new_p[3:6]
 
-            # Follow the normal vector to create training data inside the original surface:
-            # points_in = new_p[:3] - d_pos * new_p[3:6]
-            # fone = d_pos  # assign y(x) = +1 to the points inside the surface
+            fminus = -1 * d_outside  # assign y(x) = -1 to the points outside the surface
 
             # Concatenate the sub-parts to create the training data:
-            self.X_train = np.vstack((self.X_train, new_p[:3], points_out, points_out2))#, points_in))
-            self.y_train = np.hstack((self.y_train, [0.], fminus, fminus))#, fone))
+            self.X_train = np.vstack((self.X_train, new_p[:3], points_out))
+            self.y_train = np.hstack((self.y_train, [0.], fminus))
         else:
             # Follow the normal vector to create training data outside the original surface:
-            points_out = new_p[:, :3] + d_neg * new_p[:, 3:6]
-            points_out2 = new_p[:, :3] + 2 * d_neg * new_p[:, 3:6]
-            fminus = -1 * np.ones(new_p.shape[0]) * d_neg  # assign y(x) = -1 to the points outside the surface
+            points_out = new_p[:, :3] + d_outside * new_p[:, 3:6]
 
-            # points_in = new_p[:, :3] - d_pos * new_p[:, 3:6]
-            # fone = np.ones(len(points_in)) * d_pos  # assign y(x) = +1 to the points inside the surface
+            fminus = -1 * np.ones(new_p.shape[0]) * d_outside  # assign y(x) = -1 to the points outside the surface
 
             # Concatenate the sub-parts to create the training data:
-            self.X_train = np.vstack((self.X_train, [arr[:3] for arr in new_p], points_out, points_out2))#, points_in))
-            self.y_train = np.hstack((self.y_train, np.zeros(new_p.shape[0]), fminus, fminus))#, fone))
+            self.X_train = np.vstack((self.X_train, [arr[:3] for arr in new_p], points_out))
+            self.y_train = np.hstack((self.y_train, np.zeros(new_p.shape[0]), fminus))
 
 
         # Fit GP model to the new training data and predict mean and covariance at the evaluation points

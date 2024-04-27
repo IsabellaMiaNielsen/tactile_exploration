@@ -9,6 +9,7 @@ from mayavi import mlab
 # Includes the following functions
 #       - plot_point_cloud
 #       - plot_point_cloud_open3d
+#       - plot_point_cloud_xstar_open3d
 #       - plot_train_point_cloud
 #       - plot_gp_mean
 #       - plot_surface
@@ -23,7 +24,7 @@ class Visualizer:
 
         Parameters
         ----------
-        point_cloud (ndarray): Point cloud consisting of only the x, y and z position of the points
+            point_cloud (ndarray): Point cloud consisting of only the x, y and z position of the points
         """
         # Plot the point cloud
         fig = plt.figure()
@@ -35,15 +36,32 @@ class Visualizer:
         ax.set_title("Point cloud")
         plt.show()
 
+
     @staticmethod
-    def plot_point_cloud_open3d(point_cloud, Xstar):
+    def plot_point_cloud_open3d(point_cloud):
         """
-        Plots the point cloud with the maximum uncertainty point highlighted.
+        Plots the point cloud including the world frame axes in open3d.
 
         Parameters
         ----------
-        point_cloud (ndarray): Original point cloud data
-        Xstar (ndarray): Grid of points between the evaluation limits
+            point_cloud (ndarray): Original point cloud data
+        """
+        # Create axes
+        axes = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1, origin=[0, 0, 0])
+
+        # Visualize the point cloud, axes, and point of interest sphere
+        open3d.visualization.draw_geometries([point_cloud, axes])
+
+
+    @staticmethod
+    def plot_point_cloud_xstar_open3d(point_cloud, Xstar):
+        """
+        Plots the point cloud including the grid of points Xstar in open3d.
+
+        Parameters
+        ----------
+            point_cloud (ndarray): Original point cloud data
+            Xstar (ndarray): Grid of points between the evaluation limits
         """
         original_pcd = open3d.geometry.PointCloud()
         original_pcd.points = open3d.utility.Vector3dVector(point_cloud)
@@ -55,6 +73,7 @@ class Visualizer:
 
         open3d.visualization.draw_geometries([testpcd, original_pcd])
 
+
     @staticmethod
     def plot_train_point_cloud(X_train, y_train):
         """
@@ -62,8 +81,8 @@ class Visualizer:
 
         Parameters
         ----------
-        X_train (ndarray): Point cloud consisting of only the x, y and z position of the points
-        y_train (ndarray): Array containing the labels (-1, 0, 1) for each point in the point cloud
+            X_train (ndarray): Point cloud consisting of only the x, y and z position of the points
+            y_train (ndarray): Array containing the labels (-1, 0, 1) for each point in the point cloud
         """
         # Define colors based on y_train values
         colors = ['r' if label == min(y_train) else 'b' if label == 0 else 'y' for label in y_train]
@@ -83,16 +102,17 @@ class Visualizer:
         ax.legend(handles=legend_handles, loc='best', fontsize='x-small')
         plt.show()
 
+
     @staticmethod
-    def plot_gp_mean(Xstar, mu_s, min_surface = -0.001, max_surface = 0.001):
+    def plot_gp_mean(Xstar, mu_s, min_surface = -0.01, max_surface = 0.01):
         """
         Plots the mean predicted by the GP regressor for each point in Xstar.
 
         Parameters
         ----------
-        Xstar (ndarray): Refers to the grid of points between the evaluation limits for which the GP regressor predicts the surface
-        mu_s (ndarray): Array containing the predicted mean by the GP regressor for each point in Xstar
-        min_surface, max_surface (float): Min and max predicted mean value to still be considered as a point on the surface
+            Xstar (ndarray): Refers to the grid of points between the evaluation limits for which the GP regressor predicts the surface
+            mu_s (ndarray): Array containing the predicted mean by the GP regressor for each point in Xstar
+            min_surface, max_surface (float): Min and max predicted mean value to still be considered as a point on the surface
         """
         # Define colors based on y_train values
         colors = ['r' if mean < min_surface else 'b' if (mean > min_surface and mean < max_surface) else 'y' for mean in mu_s]
@@ -107,6 +127,7 @@ class Visualizer:
         ax.set_title("Mean predicted by GP regressor")
         plt.show()
 
+
     @staticmethod
     def plot_surface(Xstar, mu_s, cov_s, plot_uncertainty = False):
         """
@@ -114,10 +135,10 @@ class Visualizer:
 
         Parameters
         ----------
-        Xstar (ndarray): Refers to the grid of points between the evaluation limits for which the GP regressor predicts the surface
-        mu_s (ndarray): Array containing the predicted mean by the GP regressor for each point in Xstar
-        cov_s (ndarray): Array containing the covariance estimated by the GP regressor for each point in Xstar
-        plot_uncertainty (bool): Flag indicating wether to visualize each uncertainty level with a separate contour or to only visualize the surface contour
+            Xstar (ndarray): Refers to the grid of points between the evaluation limits for which the GP regressor predicts the surface
+            mu_s (ndarray): Array containing the predicted mean by the GP regressor for each point in Xstar
+            cov_s (ndarray): Array containing the covariance estimated by the GP regressor for each point in Xstar
+            plot_uncertainty (bool): Flag indicating wether to visualize each uncertainty level with a separate contour or to only visualize the surface contour
         """
         tsize=int((Xstar.shape[0])**(1/3)) + 1
         xeva = Xstar.T[0, :].reshape((tsize,tsize,tsize))
@@ -134,6 +155,7 @@ class Visualizer:
             mlab.contour3d(uncertainty_reshaped, contours=list(np.linspace(min_contour, max_contour, 10))) # Each contour represents one uncertainty level
         mlab.show()
 
+
     @staticmethod
     def plot_uncertainties_2D(uncertainties_at_zero_crossings):
         """
@@ -141,7 +163,7 @@ class Visualizer:
 
         Parameters
         ----------
-        uncertainties_at_zero_crossings (ndarray): Uncertainties at the zero-crossing points
+            uncertainties_at_zero_crossings (ndarray): Uncertainties at the zero-crossing points
         """
         # Plot only the uncertainties at the zero-crossing points
         plt.plot(uncertainties_at_zero_crossings)
@@ -150,6 +172,7 @@ class Visualizer:
         plt.title('Uncertainty at zero-crossing points')
         plt.show()
 
+
     @staticmethod
     def plot_uncertainties_3D(x_coords, y_coords, z_coords, uncertainties_at_zero_crossings):
         """
@@ -157,10 +180,10 @@ class Visualizer:
 
         Parameters
         ----------
-        x_coords (ndarray): X coordinates of the zero-crossing points
-        y_coords (ndarray): Y coordinates of the zero-crossing points
-        z_coords (ndarray): Z coordinates of the zero-crossing points
-        uncertainties_at_zero_crossings (ndarray): Uncertainties at the zero-crossing points
+            x_coords (ndarray): X coordinates of the zero-crossing points
+            y_coords (ndarray): Y coordinates of the zero-crossing points
+            z_coords (ndarray): Z coordinates of the zero-crossing points
+            uncertainties_at_zero_crossings (ndarray): Uncertainties at the zero-crossing points
         """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
