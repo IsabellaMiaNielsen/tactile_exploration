@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial.transform import Rotation
 import mujoco as mj
+from spatialmath import SE3
 
 def _rotation_matrix_to_align_z_to_direction(direction):
     # Normalize direction vector
@@ -31,6 +32,15 @@ def directionToNormal(TCP_R, force, rot):
         return Rotation.from_matrix(TCP_R)
     rot = Rotation.from_matrix(_rotation_matrix_to_align_z_to_direction(force))
     return rot
+
+def get_ee_transformation(rot, ee_position, desired_rot):
+    z_direction = rot[:, -1]
+    z_offset = .1
+    tool_position = ee_position + z_direction * z_offset 
+    rotated_tool_pose = SE3.Rt(desired_rot, tool_position)
+    rotated_z = rotated_tool_pose.R[:, -1]
+    ee_new_pos = rotated_tool_pose.t - rotated_z * z_offset
+    return SE3.Rt(desired_rot, ee_new_pos)
 
 def _get_contact_info(model: mj.MjModel, data: mj.MjData, actor:str, obj:str) -> np.ndarray:
     """

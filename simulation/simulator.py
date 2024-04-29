@@ -76,7 +76,8 @@ class MJ:
           force, 
           rot=rot
         )
-        rotated_pose = SE3.Rt(r.as_matrix(), pose.t)
+
+        rotated_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) #SE3.Rt(r.as_matrix(), pose.t)
 
         print("changed pose: ", rotated_pose)
         self.robot.set_ee_pose(rotated_pose)
