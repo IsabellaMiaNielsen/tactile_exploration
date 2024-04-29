@@ -2,22 +2,35 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 import mujoco as mj
 
-def directionToNormal(TCP_R, force):
-    """
-        Inputs: TCP rotation, force direction
-        Calulates the direction the robot should turn to align with the surface normal
-        Returns: Euler angles for rotation
-        If the end effector is parallel to the surface, the rotation matrix should be close to the identity matrix.
-    """
+def _rotation_matrix_to_align_z_to_direction(direction):
+    # Normalize direction vector
+    direction /= np.linalg.norm(direction)
+    print("normalized force: ", direction)
+
+    # Calculate axis of rotation
+    axis = np.cross([0, 0, 1], direction)
+    axis /= np.linalg.norm(axis)
+
+    # Calculate angle of rotation
+    angle = np.arccos(np.dot([0, 0, 1], direction))
+
+    # Construct rotation matrix using axis-angle representation
+    c = np.cos(angle)
+    s = np.sin(angle)
+    t = 1 - c
+    x, y, z = axis
+    rotation_matrix = np.array([[t*x*x + c, t*x*y - z*s, t*x*z + y*s],
+                                [t*x*y + z*s, t*y*y + c, t*y*z - x*s],
+                                [t*x*z - y*s, t*y*z + x*s, t*z*z + c]])
+
+    return np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]]) @ rotation_matrix
+
+def directionToNormal(TCP_R, force, rot):
     if force[0] == 0 and force[1] == 0 and force[2] == 0:
         print("We are not in contact. Nothing to align to.")
-        return TCP_R
-    force = [int(np.abs(force[0])), int(np.abs(force[1])), int(np.abs(force[2]))]
-    force_norm = force / np.linalg.norm(force) # Normalize the force vector to be unit
-    z_axis = np.atleast_2d([0, 0, 1]) # Axis to align with
-    rot = Rotation.align_vectors(z_axis, [force_norm])[0] # Align force to z axis
-    return rot.as_matrix() @ Rotation.from_matrix([[1, 0, 0], [0, -1, 0], [0, 0, -1]]).as_matrix() # New rotation matrix the robot should have to be aligned. 
-
+        return Rotation.from_matrix(TCP_R)
+    rot = Rotation.from_matrix(_rotation_matrix_to_align_z_to_direction(force))
+    return rot
 
 def _get_contact_info(model: mj.MjModel, data: mj.MjData, actor:str, obj:str) -> np.ndarray:
     """
@@ -33,9 +46,9 @@ def _get_contact_info(model: mj.MjModel, data: mj.MjData, actor:str, obj:str) ->
         #rot = Rotation.from_matrix(contact_frame)
         #print("contact frame: ", contact_frame)#rot.as_euler("XYZ", degrees=True))
         #print(wrench[:3])
-        return contact_frame @ wrench[:3]
+        return contact_frame @ wrench[:3], contact_frame, True
     else:
-        return np.zeros(6, dtype=np.float64)
+        return np.zeros(6, dtype=np.float64), np.zeros([3, 3], dtype=np.float64), False
 
 def _obj_in_contact(model: mj.MjModel, cs, obj1: str, obj2: str) -> bool:
     cs_ids = [cs.geom1, cs.geom2]

@@ -67,18 +67,20 @@ class MJ:
     if key == glfw.KEY_A:
       # Align to force
       pose = self.robot.get_ee_pose()
-      force = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
-      print("current pose: ", pose)
-      
-      r = utility.directionToNormal(
-        pose.R,
-        force
-      )
-      rotated_pose = SE3.Rt(r, pose.t)
+      force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+      if success:
+        print("current pose: ", pose)
+        
+        r = utility.directionToNormal(
+          pose.R,
+          force, 
+          rot=rot
+        )
+        rotated_pose = SE3.Rt(r.as_matrix(), pose.t)
 
-      print("changed pose: ", rotated_pose)
-      self.robot.set_ee_pose(rotated_pose)
-
+        print("changed pose: ", rotated_pose)
+        self.robot.set_ee_pose(rotated_pose)
+        
     if key == glfw.KEY_UP:
       # Align to force
       pose = self.robot.get_ee_pose()
