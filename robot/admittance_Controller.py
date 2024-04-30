@@ -118,7 +118,7 @@ class Admitance:
             # Exit condition in case force readings are lower than a threshold (contact lost)
             # if wrench >= [0,0,0]:
             #     break
-        return self.tool_to_base(self.Xc)
+        return self.tool_to_base(self.Xc)  #update desired end-effector position (internal state)
 
 
     def int_acc(acc, vel, dt):
