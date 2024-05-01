@@ -35,7 +35,7 @@ def directionToNormal(TCP_R, force, rot):
 
 def get_ee_transformation(rot, ee_position, desired_rot):
     z_direction = rot[:, -1]
-    z_offset = .1
+    z_offset = .124
     tool_position = ee_position + z_direction * z_offset 
     rotated_tool_pose = SE3.Rt(desired_rot, tool_position)
     rotated_z = rotated_tool_pose.R[:, -1]
