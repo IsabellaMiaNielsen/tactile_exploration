@@ -10,12 +10,18 @@ from robot.robot_control import Robot
 from spatialmath import SE3
 from robot.admittance_Controller import Admitance
 from utils import utility
+from time import sleep
+
 class MJ:
   def __init__(self):
     self.m = mujoco.MjModel.from_xml_path('scene_files/scene.xml')
     self.d = mujoco.MjData(self.m)
     self._data_lock = Lock()
     self.robot = Robot(m=self.m, d=self.d)
+    self.angle = 1
+    self.step_size = 0.01
+    self.object_center = [0.35, 0.2, 0.08]
+    self.run_control = False
     
   def run(self) -> None:
     self.th = Thread(target=self.launch_mujoco, daemon=True)
@@ -62,7 +68,10 @@ class MJ:
       print("ee pose = \n", self.robot.get_ee_pose())
 
     if key ==  glfw.KEY_F:
-      print("Force: ", utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu'))#self.d.sensordata)
+      print("Force: ", utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')[0])#self.d.sensordata)
+
+    if key ==  glfw.KEY_C:
+      self.robot.move_to_center(self.object_center, step_size=0.05)
 
     if key == glfw.KEY_A:
       # Align to force
@@ -81,6 +90,17 @@ class MJ:
 
         print("changed pose: ", rotated_pose)
         self.robot.set_ee_pose(rotated_pose)
+
+    if key == glfw.KEY_P:
+      self.robot.move_parallel(self.step_size, self.angle)
+      self.angle += 1
+      self.step_size += 0.002
+
+    if key == glfw.KEY_G:
+      if self.run_control:
+        self.run_control = False
+      else:
+        self.run_control = True       
         
     if key == glfw.KEY_UP:
       # Align to force
@@ -119,6 +139,7 @@ class MJ:
       self.robot.set_ee_pose(rotated_pose)
 
   def launch_mujoco(self):
+    aligned = False
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
       wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
       controller = Admitance(target_force = 1, wrench=wrench, curent_TCP=self.robot.get_ee_pose(), model_data=self.d, dt=0.002)
@@ -135,6 +156,42 @@ class MJ:
         # Rudimentary time keeping, will drift relative to wall clock.
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
-          time.sleep(time_until_next_step)
-        wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+          sleep(time_until_next_step)
+        if self.run_control:
+          force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+          if success: # If contact
+            if not aligned:
+              # Align 
+              pose = self.robot.get_ee_pose()
+              r = utility.directionToNormal(
+                pose.R,
+                force, 
+                rot=rot
+              )
+              rotated_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) 
+              self.robot.set_ee_pose(rotated_pose)
+              print("Aligned")
+              aligned = True
+            else:
+              pose = self.robot.get_ee_pose()
+              if np.allclose(pose, rotated_pose, rtol=1e-03): # We have aligned correctly
+                # Move parallel to the surface
+                self.robot.move_parallel(self.step_size, self.angle)
+                self.angle += 1
+                if self.step_size > 0.05: # Reset step size
+                  self.step_size = 0.01
+                else:
+                  self.step_size += 0.005
+                print("Moving along the surface")
+                aligned = False
+              else:
+                self.robot.set_ee_pose(rotated_pose)
+                aligned = False # Continue aligning
+              
+          else:
+            # Move towards center if no contact
+            step_start = time.time()
+            self.robot.move_to_center(self.object_center, step_size=0.05)
+            print("Moving towards the center")
+            aligned = False
         

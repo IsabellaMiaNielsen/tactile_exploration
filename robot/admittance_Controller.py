@@ -136,20 +136,6 @@ class Admitance:
             pos[i] = pos[i-1] + pos[i-1] * dt  # Euler integration'''
         return pos
 
-
-    def directionToNormal(TCP_R, force):
-
-        """
-            Inputs: TCP rotation (3x3 matrix), force direction (3x1 vector XYZ)
-            Calulates the direction the robot should turn to align with the surface normal
-            Returns: Euler angles for rotation
-            If the end effector is parallel to the surface, the rotation matrix should be close to the identity matrix.
-        """
-        force_norm = force / np.linalg.norm(force) # Normalize the force vector to be unit
-        z_axis = np.atleast_2d([0, 0, 1]) # Axis to align with
-        rot = Rotation.align_vectors(z_axis, [force_norm])[0] # Align force to z axis
-        return rot.as_matrix() @ TCP_R # New rotation matrix the robot should have to be aligned.
-
     def desired_force():
         Kp = 1 #set by user based on stiffness
 
@@ -184,39 +170,6 @@ class Admitance:
 
         return positional_part
 
-    def euler_to_rotation_matrix(angles):
-        """
-        Convert Euler angles (in radians) to a rotation matrix using XYZ convention.
-
-        Parameters:
-            angles (tuple or list): Euler angles in radians, in the order of (roll, pitch, yaw).
-
-        Returns:
-            numpy.ndarray: 3x3 rotation matrix representing the orientation.
-        """
-        roll, pitch, yaw = angles
-
-        # Calculate sines and cosines of Euler angles
-        sr, sp, sy = np.sin(roll), np.sin(pitch), np.sin(yaw)
-        cr, cp, cy = np.cos(roll), np.cos(pitch), np.cos(yaw)
-
-        # Define rotation matrices
-        Rx = np.array([[1, 0, 0],
-                    [0, cr, -sr],
-                    [0, sr, cr]])
-
-        Ry = np.array([[cp, 0, sp],
-                    [0, 1, 0],
-                    [-sp, 0, cp]])
-
-        Rz = np.array([[cy, -sy, 0],
-                    [sy, cy, 0],
-                    [0, 0, 1]])
-
-        # Combine rotation matrices (order: roll -> pitch -> yaw)
-        R = np.dot(Rz, np.dot(Ry, Rx))
-        
-        return R
     def get_inertial(self, inertialValues, COM_data):
         i_matrix = np.zeros((6, 6))
         for i in range(6):

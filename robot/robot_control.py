@@ -4,6 +4,7 @@ import roboticstoolbox as rtb
 from spatialmath import SE3
 import numpy as np
 from roboticstoolbox import IKSolution
+from numpy import cos, sin
 
 from typing import List, Union
 
@@ -81,6 +82,23 @@ class Robot:
     def set_ee_pose(self, T: SE3):
         q = self.invKin(T)
         self.set_q(q=q)
+
+    def move_parallel(self, step_size: float, angle: float):
+        pose = self.get_ee_pose()
+        direction_x = pose.R[:, 0]
+        rotation = np.array([[cos(angle), -sin(angle), 0], [sin(angle), cos(angle), 0], [0, 0, 1]])
+        step = step_size * (rotation @ direction_x)
+        new_pos = pose.t + step
+        new_pose = SE3.Rt(pose.R, new_pos)
+        self.set_ee_pose(new_pose)
+
+    def move_to_center(self, center, step_size: float):
+        pose = self.get_ee_pose()
+        direction_to_center = center - pose.t
+        step = direction_to_center * step_size
+        new_pos = pose.t + step
+        new_pose = SE3.Rt(pose.R, new_pos)
+        self.set_ee_pose(new_pose)
 
     def set_ee_pose_compared(self, 
             pose: Union[None, List[float], np.ndarray, SE3],
