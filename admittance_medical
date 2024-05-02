@@ -1,0 +1,117 @@
+import numpy as np
+
+
+class Admittance:
+    def __init__(self):
+        self.target_tol = 0.0075 #0.0075
+        # TODO: INSERT MAGICAL CODE HERE
+
+        # Gain matrices
+        m = 1
+        kenv = 20000 # 5000 for softbody
+        kd = 1
+        k = 4/m * kd - kenv
+
+        self.M_prev = np.array([[m,0,0],[0,m,0],[0,0,m]])
+        self.K_prev = np.array([[k,0,0],[0,k,0],[0,0,0]])
+        self.D_prev = np.array([[kd,0,0],[0,kd,0],[0,0,kd]])
+
+        # Other parameters
+        self.dt = 0.0005 #Based on the control loop of the robot (given by simulation). 1/500 in real UR5 environment. 
+        
+        #Initial conditions:
+        self.vel = np.array([0, 0, 0])
+        self.Xe = np.array([0, 0, 0])
+        self.target_force = np.array([0, 0, 0])
+
+        # self.point_cloud = Point_cloud()
+        # self.force_utils = Force_utils(self.model, self.data, self.model_names)
+
+        self.contact = True
+
+
+    def admittance(self, target):
+        # Check for contact
+        is_in_contact, _ = self.force_utils._is_in_contact("box") # obj options: "softbody" or "box"
+
+        if is_in_contact:
+            self.contact = True
+
+        if self.contact:
+            self.Xc = self.data.site_xpos[self.model_names.site_name2id["eef_site"]] # MAYBE end-effector is not the correct position we want here
+            Xd = target[:3]
+
+            # force, eef_rot_mat = self.force_utils._get_sensor_force()
+            force = self.force_utils._get_contact_info("box")
+            # force = -1.0 * force
+            print("Force", force)
+
+            tool_tip_pos = self.data.site_xpos[self.model_names.site_name2id["tcp_site"]]
+
+            # surface_normal = self.point_cloud.get_surface_normal(tool_tip_point=tool_tip_pos, print_normal=False)
+            # rot_align = self.force_utils.align_with_surface_normal(eef_rot_mat, surface_normal)
+            
+            # Update gains based on orientation function
+            M = self.M_prev #rot_align @ self.M_prev 
+            K = self.K_prev #rot_align @ self.K_prev
+            D = self.D_prev #rot_align @ self.D_prev
+
+            self.Xe = self.Xc - Xd
+            
+            print("Xc", self.Xc)
+            print("Xd", Xd)
+            # print("Xe", self.Xe)
+
+            # Step 1: Calculate acceleration
+            self.acc = np.linalg.inv(M) @ (force + self.target_force - D @ self.vel - K @ self.Xe)
+
+            # Step 2: Integrate acceleration to get velocity
+            self.vel = self.int_acc(self.acc, self.vel, self.dt)
+            
+            # Step 3: Integrate velocity to get position
+            self.Xe = self.int_vel(self.vel, self.Xe, self.dt)
+            print("Position update: ", self.Xe)
+            
+            # Step 4: Update compliant position
+            self.Xc = self.Xe + Xd
+            print("Compliant pos: ", self.Xc)
+
+            # align_quaternion = Rotation.from_matrix(rot_align).as_quat()
+            # print(np.concatenate([self.Xc, align_quaternion])
+            return np.concatenate([self.Xc, target]) #align_quaternion[0], align_quaternion[1], align_quaternion[2], align_quaternion[3]])
+        else:
+            return target
+
+
+    def int_acc(self, acc, vel, dt): # Euler integration
+        vel = vel + acc * dt
+        return vel
+
+    def int_vel(self, vel, pos, dt): # Euler integration
+        pos = pos + vel * dt
+        return pos
+
+
+    def run(
+        self, 
+        target: np.ndarray,
+        ctrl: np.ndarray,
+    ) -> None:
+        
+        # TODO: INSERT MAGICAL CODE HERE
+        self.Xc = self.data.site_xpos[self.model_names.site_name2id["eef_site"]] # MAYBE end-effector is not the correct position we want here
+        eef_quat = mat2quat(self.data.site_xmat[self.eef_id].reshape(3, 3))
+        self.eef_pose = np.concatenate([self.Xc, eef_quat])
+        self.target = target
+
+        u = self.admittance(target)
+
+        # Call the parent class's run method to apply the computed joint efforts to the robot actuators.
+        super().run(u, ctrl)
+
+
+    def main_target_reached(self):
+        if self.eef_pose is not None and self.target is not None:
+            return max(np.abs(self.eef_pose - self.target)) < self.target_tol
+        else:
+            return False
