@@ -7,6 +7,7 @@ from roboticstoolbox import IKSolution
 from numpy import cos, sin
 
 from typing import List, Union
+from random import randint
 
 
 class Robot:
@@ -83,14 +84,21 @@ class Robot:
         q = self.invKin(T)
         self.set_q(q=q)
 
-    def move_parallel(self, step_size: float, angle: float):
+    def move_parallel(self, step_size: float):
         pose = self.get_ee_pose()
         direction_x = pose.R[:, 0]
-        rotation = np.array([[cos(angle), -sin(angle), 0], [sin(angle), cos(angle), 0], [0, 0, 1]])
-        step = step_size * (rotation @ direction_x)
-        new_pos = pose.t + step
+        pose_not_good = True
+        while pose_not_good:
+            angle = randint(-180, 180)
+            angle = angle * np.pi / 180
+            rotation = np.array([[cos(angle), -sin(angle), 0], [sin(angle), cos(angle), 0], [0, 0, 1]])
+            step = step_size * (rotation @ direction_x)
+            new_pos = pose.t + step
+            if new_pos[-1] > 0.05:
+                pose_not_good = False
         new_pose = SE3.Rt(pose.R, new_pos)
         self.set_ee_pose(new_pose)
+        return new_pose
 
     def move_to_center(self, center, step_size: float):
         pose = self.get_ee_pose()
@@ -99,6 +107,7 @@ class Robot:
         new_pos = pose.t + step
         new_pose = SE3.Rt(pose.R, new_pos)
         self.set_ee_pose(new_pose)
+        return new_pose
 
     def set_ee_pose_compared(self, 
             pose: Union[None, List[float], np.ndarray, SE3],
