@@ -8,7 +8,19 @@ from utils.data_analyzer import *
 from utils.point_cloud import Point_cloud
 
 
-
+######################################################################################################
+# DataAnalyzer Class for 
+#       - using GPIS to get max uncertainty points
+# Includes the following functions
+#       - create_gp_model
+#       - update_gp_model
+#       - visu_point_cloud
+#       - visu_point_cloud_open3d
+#       - visu_train_data
+#       - visu_surface
+#       - visu_surface_grid
+#       - visu_uncertainty
+######################################################################################################
 class GPIS:
     def __init__(self, obj_translate = [-0.3, 0, 0.735], d_outside = 0.04, d_inside = 0.04, resolution = 20):
         """
@@ -139,7 +151,6 @@ class GPIS:
         Visualizes the uncertainty for all points on the surface (predicted by the gp regressor).
         """
         Visu.plot_uncertainties_3D(self.dataAnalyzer.zero_crossings_x, self.dataAnalyzer.zero_crossings_y, self.dataAnalyzer.zero_crossings_z, self.dataAnalyzer.unc_at_zero_crossings)
-
 
 
 if __name__ == "__main__":

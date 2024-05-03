@@ -10,7 +10,7 @@ from utils.visualizer import Visualizer as Visu
 #       - get_uncertainties_at_zero_crossings
 #       - find_max_uncertainty_coordinates
 #       - analyze_uncertainty
-#       - update_with_new_point
+#       - update_data_and_model
 ######################################################################################################
 class DataAnalyzer:
     def __init__(self, X_train, y_train, Xstar, gp_regressor, mu_s, cov_s):

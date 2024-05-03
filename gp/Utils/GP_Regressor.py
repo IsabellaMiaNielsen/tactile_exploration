@@ -24,6 +24,7 @@ class GP_Regressor:
         self.random_state = random_state
         self.gp = None
 
+
     def fit(self, X_train, y_train):
         """
         Fits the Gaussian Process Regressor to the training data.
@@ -40,6 +41,7 @@ class GP_Regressor:
             random_state=self.random_state
         )
         self.gp.fit(X_train, y_train)
+
 
     def predict(self, Xstar, return_cov=False):
         """

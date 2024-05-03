@@ -7,6 +7,9 @@ from utils.visualizer import Visualizer as Visu
 ######################################################################################################
 # Class for working with point clouds.
 # Includes the following functions
+#       - create_point_cloud
+#       - update_point_cloud
+#       - load_from_object_file
 #       - save_point_cloud
 #       - load_point_cloud
 #       - get_dimensions
@@ -200,7 +203,6 @@ class Point_cloud:
         desired_size = int((self.Xstar.shape[0])**(1/3)) + 1
         self.Xstar = np.pad(self.Xstar, ((0, desired_size**3 - self.Xstar.shape[0]), (0, 0)), mode='constant')
         
-
 
 if __name__ == "__main__":
     point_cloud = Point_cloud()
