@@ -40,7 +40,7 @@
 
       <!--object -->
     <body name = "pikachu" euler="0 -1.57 -1.57" pos= "-.3 0 .735" >
-      <geom  name = "pikachu_" type="mesh" mesh="pikachu" condim="3" friction="0 0 0"  solimp="0.09 0.95 0.001 0.5 2"/>
+      <geom  name = "pikachu_" type="mesh" mesh="pikachu" condim="1" friction="0 0 0"  solimp="0.09 0.95 0.001 0.5 2"/>
     </body>
   </worldbody>
 </mujoco>
