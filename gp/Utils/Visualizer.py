@@ -49,8 +49,20 @@ class Visualizer:
         # Create axes
         axes = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1, origin=[0, 0, 0])
 
+
+        # frame_pos = [-0.3, 0, 0.735]
+        # frame_orientation = [0, -1.57, -1.57]
+        
+        # # Rotate the default coordinate frame to match the specified orientation
+        # rotation_matrix = open3d.geometry.get_rotation_matrix_from_xyz(frame_orientation)
+
+        # # Apply translation to the rotated coordinate frame
+        # center_frame = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1, origin=[0, 0, 0]).translate(np.array(frame_pos))
+        # center_frame = center_frame.rotate(rotation_matrix)
+    
+
         # Visualize the point cloud, axes, and point of interest sphere
-        open3d.visualization.draw_geometries([point_cloud, axes])
+        open3d.visualization.draw_geometries([point_cloud, axes]) #, center_frame])
 
 
     @staticmethod

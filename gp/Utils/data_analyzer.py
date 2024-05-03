@@ -69,17 +69,18 @@ class DataAnalyzer:
         self.unc_at_zero_crossings = self.unc[zero_crossing_indices]
 
 
-    def find_max_uncertainty_coordinates(self, above_ground = False):
+    def find_max_uncertainty_coordinates(self, above_ground = False, z_0 = 0.0):
         """
         Finds the coordinates (x,y,z) corresponding to the maximum uncertainty estimated by the GP regressor.
         
         Parameters
         ----------
-            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
+            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than z_0.
+            z_0 (float): Maximum uncertainty points need to be above z_0
         """
         if above_ground:
-            # Filter out zero-crossing points with z value <= 0.0
-            filtered_indices = np.where(self.zero_crossings_z > 0.0)[0]
+            # Filter out zero-crossing points with z value <= z_0
+            filtered_indices = np.where(self.zero_crossings_z > z_0)[0]
             filtered_uncertainties = self.unc_at_zero_crossings[filtered_indices]
 
             # Find the index of the maximum uncertainty
@@ -95,61 +96,52 @@ class DataAnalyzer:
         self.max_unc = self.unc_at_zero_crossings[max_index]
 
 
-    def analyze_uncertainty(self, plot_uncertainties = False, above_ground = False):
+    def analyze_uncertainty(self, above_ground = True, z_0 = 0.0):
         """
-        Plots the uncertainties at the zero-crossing points and finds the point with maximum uncertainty.
+        Gets the uncertainties at the zero-crossing points and finds the point with maximum uncertainty.
 
         Parameters
         ----------
-            plot_uncertainties (bool): Flag indicating whether to visualize uncertainties after updating the model.
-            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
+            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than z_0.
+            z_0 (float): Maximum uncertainty points need to be above z_0
         """
         self.get_uncertainties_at_zero_crossings()
-        self.find_max_uncertainty_coordinates(above_ground)
-
-        print("Coordinates of maximum uncertainty point: ({:.4f}, {:.4f}, {:.4f})".format(self.max_x, self.max_y, self.max_z))
-        print("Uncertainty: {:.5f}".format(self.max_unc))
-
-        if plot_uncertainties:
-            Visu.plot_uncertainties_3D(self.zero_crossings_x, self.zero_crossings_y, self.zero_crossings_z, self.unc_at_zero_crossings)
+        self.find_max_uncertainty_coordinates(above_ground, z_0)
 
 
-    def update_with_new_point(self, new_p, d_outside = 0.04, d_inside = 0.04, plot_uncertainties = False, above_ground = False):
+    def update_data_and_model(self, points, normals, d_outside = 0.04, d_inside = 0.04, above_ground = False, z_0 = 0.0):
         """
         Update the GP regressor model with a new point or points for decreasing the uncertainty at that point/region.
 
         Parameters
         ----------
-            new_p (ndarray): New point or array of new points to add to the training data. Each point consists of the coordinates (x, y, z) and the normal vector (nx, ny, nz).
+            points (ndarray or list): New point or array of new points to add to the training data. Each point consists of the coordinates (x, y, z).
+            normals (ndarray or list): Normal vector of the new point or array of normals of the new points. Consists of (nx, ny, nz).
             d_outside (float): Step size variable for initializing points outside of the surface.
             d_inside (float): Step size variable for initializing points inside of the surface.
-            plot_uncertainties (bool): Flag indicating whether to visualize uncertainties after updating the model.
-            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than 0.0.
+            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than z_0.
+            z_0 (float): Maximum uncertainty points need to be above z_0
         """
-        if new_p.ndim == 1:
-            # Follow the normal vector to create training data outside the original surface:
-            points_out = new_p[:3] + d_outside * new_p[3:6]
+        # Convert to numpy arrays if inputs are lists
+        points = np.asarray(points)
+        normals = np.asarray(normals)
 
-            fminus = -1 * d_outside  # assign y(x) = -1 to the points outside the surface
+        # Check if points and normals are 2D arrays
+        if points.ndim == 1:
+            points = np.asarray([points])  # Convert single point to a ndarray of points
+        if normals.ndim == 1:
+            normals = np.asarray([normals])  # Convert single normal to a ndarray of normals
 
-            # Concatenate the sub-parts to create the training data:
-            self.X_train = np.vstack((self.X_train, new_p[:3], points_out))
-            self.y_train = np.hstack((self.y_train, [0.], fminus))
-        else:
-            # Follow the normal vector to create training data outside the original surface:
-            points_out = new_p[:, :3] + d_outside * new_p[:, 3:6]
+        # Follow the normal vector to create training data outside the original surface:
+        points_out = points + d_outside * normals
+        fminus = -1 * np.ones(points.shape[0]) * d_outside  # assign y(x) = -1 to the points outside the surface
 
-            fminus = -1 * np.ones(new_p.shape[0]) * d_outside  # assign y(x) = -1 to the points outside the surface
-
-            # Concatenate the sub-parts to create the training data:
-            self.X_train = np.vstack((self.X_train, [arr[:3] for arr in new_p], points_out))
-            self.y_train = np.hstack((self.y_train, np.zeros(new_p.shape[0]), fminus))
-
+        # Concatenate the sub-parts to create the training data:
+        self.X_train = np.vstack((self.X_train, points, points_out))
+        self.y_train = np.hstack((self.y_train, np.zeros(points.shape[0]), fminus))
 
         # Fit GP model to the new training data and predict mean and covariance at the evaluation points
         self.gp_regressor.fit(self.X_train, self.y_train)
         self.mu_s, self.cov_s = self.gp_regressor.predict(self.Xstar, return_cov=True)
 
-        # Visualization.plot_surface(self.Xstar, self.mu_s, self.cov_s)
-
-        self.analyze_uncertainty(plot_uncertainties, above_ground)
+        self.analyze_uncertainty(above_ground, z_0)

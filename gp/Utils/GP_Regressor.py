@@ -14,7 +14,7 @@ class GP_Regressor:
         Parameters
         ----------
             kernel: The kernel specifying the covariance function.
-            alpha: Value added to the diagonal of the kernel matrix during fitting.
+            alpha (float): Value added to the diagonal of the kernel matrix during fitting.
             optimizer (str): The optimizer to use during fitting.
             random_state (int): Seed used by the random number generator.
         """
@@ -30,8 +30,8 @@ class GP_Regressor:
 
         Parameters
         ----------
-            X_train: The input training data.
-            y_train: The target training data.
+            X_train (ndarray): The input training data.
+            y_train (ndarray): The target training data.
         """
         self.gp = GaussianProcessRegressor(
             kernel=self.kernel,
@@ -47,7 +47,7 @@ class GP_Regressor:
 
         Parameters
         ----------
-            Xstar: The input test data.
+            Xstar (ndarray): The input test data.
             return_cov (bool): Whether to return the covariance of the prediction.
 
         Returns
