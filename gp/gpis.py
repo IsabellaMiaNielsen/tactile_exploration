@@ -1,10 +1,9 @@
 import numpy as np
-from sklearn.gaussian_process.kernels import RBF
 from utils.gp_regressor import *
 from utils.visualizer import Visualizer as Visu
 from utils.data_analyzer import *
-
 from utils.point_cloud import Point_cloud
+
 
 
 ######################################################################################################
@@ -51,7 +50,7 @@ class GPIS:
         
         Returns
         -------
-            max_unc_position (list): Coordinates of the point with maximum uncertainty.
+            max_unc_position (ndarray): Coordinates of the point with maximum uncertainty.
             max_unc (float): Maximum uncertainty value.
         """
         # Add points to point cloud of class Point_cloud
@@ -78,12 +77,12 @@ class GPIS:
         self.mu_s, self.cov_s = self.gp_regressor.predict(self.point_cloud.Xstar, return_cov=True)
 
         self.dataAnalyzer = DataAnalyzer(self.point_cloud.X_train, self.point_cloud.y_train, self.point_cloud.Xstar, self.gp_regressor, self.mu_s, self.cov_s)
-        self.dataAnalyzer.analyze_uncertainty(above_ground=True, z_0=self.point_cloud.obj_translate[2])
+        self.dataAnalyzer.analyze_uncertainty(z_0=self.point_cloud.obj_translate[2])
 
-        print("Coordinates of maximum uncertainty point: ({:.4f}, {:.4f}, {:.4f})".format(self.dataAnalyzer.max_x, self.dataAnalyzer.max_y, self.dataAnalyzer.max_z))
+        print("Coordinates of maximum uncertainty point: ({:.4f}, {:.4f}, {:.4f})".format(*self.dataAnalyzer.max_unc_pos))
         print("Uncertainty: {:.5f}".format(self.dataAnalyzer.max_unc))
         
-        return [self.dataAnalyzer.max_x, self.dataAnalyzer.max_y, self.dataAnalyzer.max_z], self.dataAnalyzer.max_unc
+        return self.dataAnalyzer.max_unc_pos, self.dataAnalyzer.max_unc
 
 
     def update_gp_model(self, points, normals):
@@ -97,18 +96,18 @@ class GPIS:
         
         Returns
         -------
-            max_unc_position (list): Coordinates of the point with maximum uncertainty.
+            max_unc_position (ndarray): Coordinates of the point with maximum uncertainty.
             max_unc (float): Maximum uncertainty value.
         """
         # Update open3d pointcloud with new points and normals
         self.point_cloud.update_point_cloud(points, normals)
         
         # Update gp model with new points and normals and compute maximum uncertainty
-        self.dataAnalyzer.update_data_and_model(points, normals, d_outside=self.point_cloud.d_outside, d_inside=self.point_cloud.d_inside, above_ground=True, z_0=self.point_cloud.obj_translate[2])
+        self.dataAnalyzer.update_data_and_model(points, normals, d_outside=self.point_cloud.d_outside, d_inside=self.point_cloud.d_inside, z_0=self.point_cloud.obj_translate[2])
 
-        print("Coordinates of maximum uncertainty point: ({:.4f}, {:.4f}, {:.4f})".format(self.dataAnalyzer.max_x, self.dataAnalyzer.max_y, self.dataAnalyzer.max_z))
+        print("Coordinates of maximum uncertainty point: ({:.4f}, {:.4f}, {:.4f})".format(*self.dataAnalyzer.max_unc_pos))
         print("Uncertainty: {:.5f}".format(self.dataAnalyzer.max_unc))
-        return [self.dataAnalyzer.max_x, self.dataAnalyzer.max_y, self.dataAnalyzer.max_z], self.dataAnalyzer.max_unc
+        return self.dataAnalyzer.max_unc_pos, self.dataAnalyzer.max_unc
 
 
     def visu_point_cloud(self):
@@ -150,7 +149,7 @@ class GPIS:
         """
         Visualizes the uncertainty for all points on the surface (predicted by the gp regressor).
         """
-        Visu.plot_uncertainties_3D(self.dataAnalyzer.zero_crossings_x, self.dataAnalyzer.zero_crossings_y, self.dataAnalyzer.zero_crossings_z, self.dataAnalyzer.unc_at_zero_crossings)
+        Visu.plot_uncertainties_3D(self.dataAnalyzer.zero_crossings, self.dataAnalyzer.unc_at_zero_crossings)
 
 
 if __name__ == "__main__":
@@ -170,9 +169,6 @@ if __name__ == "__main__":
 
     gpis.update_gp_model(test_points, test_normals)
 
-
     # gpis.visu_surface()
-
-    # gpis.visu_uncertainty()
-
+    gpis.visu_uncertainty()
     # gpis.visu_surface_grid()

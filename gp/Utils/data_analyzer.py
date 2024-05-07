@@ -36,80 +36,107 @@ class DataAnalyzer:
         self.mu_s = mu_s
         self.unc = np.diag(cov_s) # Uncertainty
         self.unc_at_zero_crossings = None # Uncertainties at the zero-crossing points
-        self.zero_crossings_x = None # X coordinates of the zero-crossing points
-        self.zero_crossings_y = None # Y coordinates of the zero-crossing points
-        self.zero_crossings_z = None # Z coordinates of the zero-crossing points
-        self.max_unc_x = None
-        self.max_unc_y = None
-        self.max_unc_z = None
+        self.zero_crossings = None # Coordinates of the zero-crossing points
         self.max_unc = None
+        self.max_unc_pos = None
 
 
     def get_uncertainties_at_zero_crossings(self):
         """
-        First, it finds the indices where a zero-crossing occurs (where the sign of mu_s changes).
-        Then, it finds the uncertainties at the zero-crossing points based on the indices.
+        1. Reshapes the arrays for easy calculation.
+        2. Computes the sign changes of mu_s (predicted mean by Gaussian Process) in all axes directions (x, y and z axis).
+        3. If the sign changes, a zero-crossing occurs. 
+        4. For better accuracy save the two indices between which the zero crossing occurs.
+        5. Only take one index out of the two where the predicted mean (mu_s) is closer to zero which means closer to the zero-crossing.
+        6. Finds the actual zero-crossing position and the uncertainties at the zero-crossing points based on the indices.
         """
-        sign_changes = np.where(np.diff(np.sign(self.mu_s)))[0]
+        tsize=int((self.Xstar.shape[0])**(1/3)) + 1
+        Xstar_reshape = self.Xstar.reshape((tsize,tsize,tsize,3))
+        mu_s_reshaped = self.mu_s.reshape((tsize,tsize,tsize))
+        unc_reshaped = self.unc.reshape((tsize,tsize,tsize))
+
+        sign_mu_s = np.sign(self.mu_s)
+        sign_mu_s = sign_mu_s.reshape((tsize,tsize,tsize))
+
+        # Calculate sign changes along each axis
+        sign_changes = []
+
+        for axis in range(3): # Iterate over 3 axes (3D space)
+            sign_changes_axis = np.asarray(np.where(np.diff(sign_mu_s, axis=axis))).T
+            for index in sign_changes_axis:
+                current_index = list(index)
+                other_index = list(index)
+                other_index[axis] += 1 
+
+                sign_changes.append([current_index, other_index])
+
+        sign_changes = np.asarray(sign_changes)
+
+        # Initialize array to store zero crossing indices
         zero_crossing_indices = []
 
-        # Find the index closest to zero for each sign change
-        for idx in sign_changes:
-            if self.mu_s[idx] * self.mu_s[idx + 1] < 0: # Ensure sign change occurs within the interval
-                zero_crossing_index = brentq(lambda x: self.mu_s[int(np.floor(x))] if x < len(self.mu_s) else self.mu_s[-1], idx, idx + 1)
-                zero_crossing_indices.append(int(np.floor(zero_crossing_index)))
+        # Iterate through sign_changes
+        for idx_pair in sign_changes:
+            # Initialize variables to store closest index and minimum distance to zero
+            closest_index = None
+            min_distance = np.inf
+            
+            # Iterate through pairs of indices
+            for idx in idx_pair:
+                # Calculate distance to zero
+                distance_to_zero = np.abs(mu_s_reshaped[tuple(idx)])
+                
+                # Update closest index if current index is closer to zero
+                if distance_to_zero < min_distance:
+                    closest_index = idx
+                    min_distance = distance_to_zero
+            
+            # Add closest index to zero_crossing_indices
+            zero_crossing_indices.append(closest_index)
 
+        # Convert zero_crossing_indices to numpy array
         zero_crossing_indices = np.array(zero_crossing_indices)
 
-        self.zero_crossings_x = self.Xstar[zero_crossing_indices, 0]
-        self.zero_crossings_y = self.Xstar[zero_crossing_indices, 1]
-        self.zero_crossings_z = self.Xstar[zero_crossing_indices, 2]
+        # Get actual x y z values of the zero crossings
+        self.zero_crossings = Xstar_reshape[zero_crossing_indices[:, 0], zero_crossing_indices[:, 1], zero_crossing_indices[:, 2]]
 
         # Get uncertainties based on the indices of zero-crossing points
-        self.unc_at_zero_crossings = self.unc[zero_crossing_indices]
+        self.unc_at_zero_crossings = unc_reshaped[zero_crossing_indices[:, 0], zero_crossing_indices[:, 1], zero_crossing_indices[:, 2]]
 
 
-    def find_max_uncertainty_coordinates(self, above_ground = False, z_0 = 0.0):
+    def find_max_uncertainty_coordinates(self, z_0 = 0.0):
         """
         Finds the coordinates (x,y,z) corresponding to the maximum uncertainty estimated by the GP regressor.
         
         Parameters
         ----------
-            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than z_0.
             z_0 (float): Maximum uncertainty points need to be above z_0
         """
-        if above_ground:
-            # Filter out zero-crossing points with z value <= z_0
-            filtered_indices = np.where(self.zero_crossings_z > z_0)[0]
-            filtered_uncertainties = self.unc_at_zero_crossings[filtered_indices]
+        # Filter out zero-crossing points with z value <= z_0
+        filtered_indices = np.where(self.zero_crossings[:, 2] > z_0)[0]
+        filtered_uncertainties = self.unc_at_zero_crossings[filtered_indices]
 
-            # Find the index of the maximum uncertainty
-            max_index = filtered_indices[np.argmax(filtered_uncertainties)]
-        else:
-            # Find the index of the maximum uncertainty among all zero-crossing points
-            max_index = np.argmax(self.unc_at_zero_crossings)
-            
+        # Find the index of the maximum uncertainty
+        max_index = filtered_indices[np.argmax(filtered_uncertainties)]
+       
         # Retrieve the x, y, and z coordinates corresponding to the maximum uncertainty
-        self.max_x = self.zero_crossings_x[max_index]
-        self.max_y = self.zero_crossings_y[max_index]
-        self.max_z = self.zero_crossings_z[max_index]
+        self.max_unc_pos = self.zero_crossings[max_index]
         self.max_unc = self.unc_at_zero_crossings[max_index]
 
 
-    def analyze_uncertainty(self, above_ground = True, z_0 = 0.0):
+    def analyze_uncertainty(self, z_0 = 0.0):
         """
         Gets the uncertainties at the zero-crossing points and finds the point with maximum uncertainty.
 
         Parameters
         ----------
-            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than z_0.
             z_0 (float): Maximum uncertainty points need to be above z_0
         """
         self.get_uncertainties_at_zero_crossings()
-        self.find_max_uncertainty_coordinates(above_ground, z_0)
+        self.find_max_uncertainty_coordinates(z_0)
 
 
-    def update_data_and_model(self, points, normals, d_outside = 0.04, d_inside = 0.04, above_ground = False, z_0 = 0.0):
+    def update_data_and_model(self, points, normals, d_outside = 0.04, d_inside = 0.04, z_0 = 0.0):
         """
         Update the GP regressor model with a new point or points for decreasing the uncertainty at that point/region.
 
@@ -119,7 +146,6 @@ class DataAnalyzer:
             normals (ndarray or list): Normal vector of the new point or array of normals of the new points. Consists of (nx, ny, nz).
             d_outside (float): Step size variable for initializing points outside of the surface.
             d_inside (float): Step size variable for initializing points inside of the surface.
-            above_ground (bool): If True, finds the maximum uncertainty where the z value is greater than z_0.
             z_0 (float): Maximum uncertainty points need to be above z_0
         """
         # Convert to numpy arrays if inputs are lists
@@ -144,4 +170,4 @@ class DataAnalyzer:
         self.gp_regressor.fit(self.X_train, self.y_train)
         self.mu_s, self.cov_s = self.gp_regressor.predict(self.Xstar, return_cov=True)
 
-        self.analyze_uncertainty(above_ground, z_0)
+        self.analyze_uncertainty(z_0)

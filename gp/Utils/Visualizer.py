@@ -186,20 +186,18 @@ class Visualizer:
 
 
     @staticmethod
-    def plot_uncertainties_3D(x_coords, y_coords, z_coords, uncertainties_at_zero_crossings):
+    def plot_uncertainties_3D(zero_crossings, uncertainties_at_zero_crossings):
         """
         Plots uncertainties at the zero-crossing points.
 
         Parameters
         ----------
-            x_coords (ndarray): X coordinates of the zero-crossing points
-            y_coords (ndarray): Y coordinates of the zero-crossing points
-            z_coords (ndarray): Z coordinates of the zero-crossing points
+            zero_crossings (ndarray): Coordinates of the zero-crossing points
             uncertainties_at_zero_crossings (ndarray): Uncertainties at the zero-crossing points
         """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(x_coords, y_coords, z_coords, c=uncertainties_at_zero_crossings, cmap='viridis', s=20)
+        ax.scatter(zero_crossings[:, 0], zero_crossings[:, 1], zero_crossings[:, 2], c=uncertainties_at_zero_crossings, cmap='viridis', s=20)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
