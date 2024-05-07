@@ -1,5 +1,4 @@
 import numpy as np
-import open3d as o3d
 from sklearn.gaussian_process.kernels import RBF
 from utils.gp_regressor import *
 from utils.visualizer import Visualizer as Visu
@@ -68,21 +67,22 @@ class GPIS:
         self.point_cloud.generate_Xstar() 
 
         # Define the Gaussian Process Regressor model
-        kernel = 1.0 * RBF(length_scale=0.04) # Optimized for rounded_cube: 1.0 and 0.04
+        length_scale = 0.04 # Optimized for rounded_cube: 0.04
         noise_3D = 0.001 # 0.001
-        gp_regressor = GP_Regressor(kernel=kernel, alpha=noise_3D**2)
+        self.gp_regressor = GP_Regressor(length_scale, alpha=noise_3D**2)
 
         # Fit GP model to training data
-        gp_regressor.fit(self.point_cloud.X_train, self.point_cloud.y_train)
+        self.gp_regressor.fit(self.point_cloud.X_train, self.point_cloud.y_train)
 
         # Predict mean and covariance at evaluation points
-        self.mu_s, self.cov_s = gp_regressor.predict(self.point_cloud.Xstar, return_cov=True)
+        self.mu_s, self.cov_s = self.gp_regressor.predict(self.point_cloud.Xstar, return_cov=True)
 
-        self.dataAnalyzer = DataAnalyzer(self.point_cloud.X_train, self.point_cloud.y_train, self.point_cloud.Xstar, gp_regressor, self.mu_s, self.cov_s)
-        self.dataAnalyzer.analyze_uncertainty()
+        self.dataAnalyzer = DataAnalyzer(self.point_cloud.X_train, self.point_cloud.y_train, self.point_cloud.Xstar, self.gp_regressor, self.mu_s, self.cov_s)
+        self.dataAnalyzer.analyze_uncertainty(above_ground=True, z_0=self.point_cloud.obj_translate[2])
 
         print("Coordinates of maximum uncertainty point: ({:.4f}, {:.4f}, {:.4f})".format(self.dataAnalyzer.max_x, self.dataAnalyzer.max_y, self.dataAnalyzer.max_z))
         print("Uncertainty: {:.5f}".format(self.dataAnalyzer.max_unc))
+        
         return [self.dataAnalyzer.max_x, self.dataAnalyzer.max_y, self.dataAnalyzer.max_z], self.dataAnalyzer.max_unc
 
 
@@ -170,4 +170,9 @@ if __name__ == "__main__":
 
     gpis.update_gp_model(test_points, test_normals)
 
-    gpis.visu_surface()
+
+    # gpis.visu_surface()
+
+    # gpis.visu_uncertainty()
+
+    # gpis.visu_surface_grid()
