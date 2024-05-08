@@ -72,8 +72,8 @@ class DataAnalyzer:
 
         sign_changes = np.asarray(sign_changes)
 
-        # Initialize array to store zero crossing indices
-        zero_crossing_indices = []
+        # Initialize array to store unique zero crossing indices
+        unique_zero_crossing_indices = set()
 
         # Iterate through sign_changes
         for idx_pair in sign_changes:
@@ -92,10 +92,10 @@ class DataAnalyzer:
                     min_distance = distance_to_zero
             
             # Add closest index to zero_crossing_indices
-            zero_crossing_indices.append(closest_index)
+            unique_zero_crossing_indices.add(tuple(closest_index))
 
-        # Convert zero_crossing_indices to numpy array
-        zero_crossing_indices = np.array(zero_crossing_indices)
+        # Convert unique_zero_crossing_indices to numpy array
+        zero_crossing_indices = np.array(list(unique_zero_crossing_indices))
 
         # Get actual x y z values of the zero crossings
         self.zero_crossings = Xstar_reshape[zero_crossing_indices[:, 0], zero_crossing_indices[:, 1], zero_crossing_indices[:, 2]]
