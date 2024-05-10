@@ -4,13 +4,12 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from utils import utility
 import time
-from spatialmath import SE3, SO3
-import math
-
-EPS = np.finfo(float).eps * 4.0
+from spatialmath import SE3
 
 
-class Admittance:
+
+
+class Admitance:
     def __init__(self, robot, m, d):
 
         '''
@@ -27,120 +26,54 @@ class Admittance:
             Xc = desired end effector position based on controller response to external force (surface normal) in TOOL FRAME
         '''
 
-        self.robot = robot
-        self.model = m
-        self.data = d
-
-        self.dt = 0.002
-        
-        self.target_tol = 0.005 #0.0075
-
         # Gain matrices
-        m = 1
-        kenv = 20000 # 5000 for softbody
-        kd = 250 # 1
-        k = 5 #4/m * kd - kenv
+        m1 = 1.0
+        m2 = 1.0
+        m3 = 3.0
+        k1 = 1000.0
+        k2 = 1000.0
+        k3 = 10.0
+        kenv1 = 10.0 #set by user depending on current object to be reconstructed
+        kenv2 = 10.0
+        kd1 = 2*np.sqrt(m1*(k1+kenv1))
+        kd2 = 2*np.sqrt(m2*(k2+kenv2))
+        kd3 = 2*np.sqrt(m3*(k3))
 
-        self.M = np.array([[m,0,0],[0,m,0],[0,0,m]])
-        self.K = np.array([[k,0,0],[0,k,0],[0,0,0]])
-        self.D = np.array([[kd,0,0],[0,kd,0],[0,0,kd]])
-
-        
-        #Initial conditions:
-        self._x_d = np.array([0.0, 0.0, 0.0])
-        self._dc_c = np.array([0.0, 0.0, 0.0])
-        self._x_e = np.array([0.0, 0.0, 0.0])
-        self._dx_e = np.array([0.0, 0.0, 0.0])
-        self.target_force = np.array([0.0, 0.0, 0.0])
+        self.robot = robot
 
         self.object_center = [0.4, 0.2, 0.08]
 
+        self.dt = 0.0005 #Based on the control loop of the robot (given by simulation). 1/500 in real UR5 environment. 
+        
+        self.M_prev = np.array([[m1,0,0],[0,m2,0],[0,0,m3]])
+        
+        self.K_prev = np.array([[k1,0,0],[0,k2,0],[0,0,0]])  #3 element of 3rd row can be zero        
+        
+        self.D_prev = np.array([[kd1,0,0],[0,kd2,0],[0,0,kd3]])
+        
         self.aligned = False
-        self.contact = False
 
-
-    def admittance(self, target):
-        tcp_pose = self.robot.get_ee_pose()
-        tcp_rot_mat = tcp_pose.R
-        tcp_pos = tcp_pose.t
-
-        tcp_quat = self.mat2quat(tcp_rot_mat)
-        self.actual_pose = np.concatenate([tcp_pos, tcp_quat])
-        self.target_pose = target
-
-        self._x_d = target[:3]
-
-        # Check for contact and get current force
-        force, _, is_in_contact = utility._get_contact_info(model=self.model, data=self.data, actor='gripper', obj='pikachu')
-
-        if is_in_contact:
-            self.target_force = np.array([0.0, 0.0, -2.0]) # Direction in base-frame
-            self.contact = False
-
-
-        if self.contact:
-            tool_tip_pos = self.data.site_xpos[self.model_names.site_name2id["tcp_site"]]
-            print("Current Rotation: ", tcp_rot_mat)
-            surface_normal = np.array([0, 0, 1])# self.point_cloud.get_surface_normal(tool_tip_point=tool_tip_pos, print_normal=False)
-            rot_align = self.force_utils.align_with_surface_normal(tcp_rot_mat, surface_normal)
-
-            print("Alignment Rotation: ", rot_align)
-            # Convert alignment rotation matrix to quaternion
-            align_quaternion = Rotation.from_matrix(rot_align).as_quat()
-        else:
-            align_quaternion = target[-4:]
-        
-        # Update gains based on orientation function
-        # self.M = rot_align @ self.M
-        # self.K = rot_align @ self.K
-        # self.D = rot_align @ self.D
-
-
-        # Positional part of the admittance controller
-        # Step 1: Acceleration error
-        ddx_e = np.linalg.inv(self.M) @ (force + self.target_force - self.K @ self._x_e - self.D @ self._dx_e)
-
-        # Step 2: Integrate -> velocity error
-        self._dx_e += ddx_e * self.dt # Euler integration
-
-        # Step 3: Integrate -> position error
-        self._x_e += self._dx_e * self.dt # Euler integration
-
-        # Step 4: Update the position
-        self._x_c = self._x_d + self._x_e
-
-        print("Current Position: ", tcp_pos)
-        # print("Desired Position: ", self._x_d)
-        # # print("Force: ", force)
-        # print("Position error: ", self._x_e)
-        print("Compliant Position: ", self._x_c)
-
-        align_rot_matrix = self.quat2mat(align_quaternion)
-        # compliant_pose = SE3.Rt(tcp_pose.R, self._x_c)
-
-        compliant_pose = utility.get_ee_transformation(tcp_pose.R, tcp_pose.t, align_rot_matrix) 
-        print(compliant_pose)
-        return compliant_pose
-
-
-    def target_reached(self):
-        if self.actual_pose is not None and self.target_pose is not None:
-            return max(np.abs(self.actual_pose - self.target_pose)) < self.target_tol
-        else:
-            return False
+        self.m = m
+        self.d = d
         
 
-    def step(self, target):
-        compliant_pose = self.admittance(target)
-        return compliant_pose, self.target_reached()
+        #Initial conditions:
+        self.vel = np.array([0, 0, 0])
+        self.xe_init = False
+        self.Xe = np.array([0, 0, 0])
+        self.target_force = np.array([0, 0, 0])
+
+        self.current_TCP = self.robot.get_ee_pose()
+        self.Xc = utility._get_pose_from_tran(self.current_TCP)
 
 
-
-
-
-
+        self.wanted_pose = None
 
     def admitance(self, force, rot, success):
+
+        print(self.robot.get_ee_pose())
+
+
         ##first think when calling admittance controller should be if current is in vecinity of desired. IF it is, update Xd and run controller. If its not, mantain current Xd and rerun controller. 
 
         pose = self.robot.get_ee_pose() #TCP T matrix
@@ -240,14 +173,6 @@ class Admittance:
             else: 
                 self.xe_init = True
             
-            #print("Type of wrench:", wrench) = 3x1 forces
-            #print("Type of target force:", self.target_force) = 3x1 value
-            #print("Type of vel:", velx) = 3x1 value
-            #print("Type of pos errr:", pos_error) 3x1 values
-            #print("Type of K:", K) 3x3
-            #print("Type of D:", D) 3x3
-            #print("Type of M:", M) 3x3
-            
 
             # Step 1: Calculate acceleration
             self.acc = np.linalg.inv(M) @ (self.wrench + self.target_force - D @ self.vel - K @ self.Xe)
@@ -257,11 +182,15 @@ class Admittance:
 
             # Step 3: Integrate velocity to get position
             self.Xe = self.int_vel(self.vel, self.Xe, self.dt)
-            #print("Position update: ", self.Xe)
 
             # Step 4: Update compliant position
             self.Xc = self.Xe + Xd
+
+            self.current_TCP = self.robot.get_ee_pose()
+            curr_pos = utility._get_pose_from_tran(self.current_TCP)
+            print("Current pos: ", curr_pos)
             print("Compliant pos: ", self.Xc)
+            print("Position error: ", self.Xe)
 
             self.wanted_pose = SE3.Rt(pose.R, self.Xc)
 
@@ -288,6 +217,24 @@ class Admittance:
         
         return self.wanted_pose  #return T to update desired end-effector position
         
+        
+
+
+    def int_acc(self, acc, vel, dt):
+        vel = vel + acc * dt
+        '''
+        k1 = acc
+        k2 = acc
+        vel = vel + 0.5 * (k1 + k2) * dt  # Second-order Runge-Kutta (Midpoint) method for single values    
+        '''
+        return vel
+
+    def int_vel(self, vel, pos, dt):
+        pos = pos + vel * dt
+        '''for i in range(1, len(vel)):
+            pos[i] = pos[i-1] + pos[i-1] * dt  # Euler integration'''
+        return pos
+
 
     def directionToNormal(self, TCP_R, force):
 
@@ -407,72 +354,29 @@ class Admittance:
         R = np.dot(Rz, np.dot(Ry, Rx))
         
         return R
+    def get_inertial(self, inertialValues, COM_data):
+        i_matrix = np.zeros((6, 6))
+        for i in range(6):
+            current_matrix = np.zeros((6,6))
+            Ii = np.zeros((3,3))
+            Ii[0,0] = inertialValues[i]
+            Ii[1,1] = i + 1
+            Ii[2,2] = i + 2
 
+            poseVector = np.array([COM_data[i,0], COM_data[i,1], COM_data[i,2]])
 
-    def mat2quat(self, rmat):
-        """
-        Converts given rotation matrix to quaternion.
+            skew_matrix = np.array([
+            [0, -poseVector[2], poseVector[1]],
+            [poseVector[2], 0, -poseVector[0]],
+            [-poseVector[1], poseVector[0], 0]
+             ])
 
-        Args:
-            rmat (np.array): 3x3 rotation matrix
+            mi_ri = skew_matrix * self.link_masses[i]
+            identity_matrix = np.eye(3) * self.link_masses[i]
 
-        Returns:
-            np.array: (x,y,z,w) float quaternion angles
-        """
-        M = np.asarray(rmat).astype(np.float32)[:3, :3]
+            current_matrix[:3, :3] = Ii
+            current_matrix[:3, 3:] = mi_ri.T
+            current_matrix[3:, :3] = mi_ri
+            current_matrix[3:, 3:] = identity_matrix
 
-        m00 = M[0, 0]
-        m01 = M[0, 1]
-        m02 = M[0, 2]
-        m10 = M[1, 0]
-        m11 = M[1, 1]
-        m12 = M[1, 2]
-        m20 = M[2, 0]
-        m21 = M[2, 1]
-        m22 = M[2, 2]
-        # symmetric matrix K
-        K = np.array(
-            [
-                [m00 - m11 - m22, np.float32(0.0), np.float32(0.0), np.float32(0.0)],
-                [m01 + m10, m11 - m00 - m22, np.float32(0.0), np.float32(0.0)],
-                [m02 + m20, m12 + m21, m22 - m00 - m11, np.float32(0.0)],
-                [m21 - m12, m02 - m20, m10 - m01, m00 + m11 + m22],
-            ]
-        )
-        K /= 3.0
-        # quaternion is Eigen vector of K that corresponds to largest eigenvalue
-        w, V = np.linalg.eigh(K)
-        inds = np.array([3, 0, 1, 2])
-        q1 = V[inds, np.argmax(w)]
-        if q1[0] < 0.0:
-            np.negative(q1, q1)
-        inds = np.array([1, 2, 3, 0])
-        return q1[inds]
-    
-
-    def quat2mat(self, quaternion):
-        """
-        Converts given quaternion to matrix.
-
-        Args:
-            quaternion (np.array): (x,y,z,w) vec4 float angles
-
-        Returns:
-            np.array: 3x3 rotation matrix
-        """
-        # awkward semantics for use with numba
-        inds = np.array([3, 0, 1, 2])
-        q = np.asarray(quaternion).copy().astype(np.float32)[inds]
-
-        n = np.dot(q, q)
-        if n < EPS:
-            return np.identity(3)
-        q *= math.sqrt(2.0 / n)
-        q2 = np.outer(q, q)
-        return np.array(
-            [
-                [1.0 - q2[2, 2] - q2[3, 3], q2[1, 2] - q2[3, 0], q2[1, 3] + q2[2, 0]],
-                [q2[1, 2] + q2[3, 0], 1.0 - q2[1, 1] - q2[3, 3], q2[2, 3] - q2[1, 0]],
-                [q2[1, 3] - q2[2, 0], q2[2, 3] + q2[1, 0], 1.0 - q2[1, 1] - q2[2, 2]],
-            ]
-        )
+            i_matrix = i_matrix + current_matrix

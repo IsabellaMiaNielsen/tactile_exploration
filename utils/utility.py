@@ -58,7 +58,7 @@ def _get_contact_info(model: mj.MjModel, data: mj.MjData, actor:str, obj:str) ->
         #print(wrench[:3])
         return contact_frame @ wrench[:3], contact_frame, True
     else:
-        return np.zeros(6, dtype=np.float64), np.zeros([3, 3], dtype=np.float64), False
+        return np.zeros(3, dtype=np.float64), np.zeros([3, 3], dtype=np.float64), False
 
 def _obj_in_contact(model: mj.MjModel, cs, obj1: str, obj2: str) -> bool:
     cs_ids = [cs.geom1, cs.geom2]

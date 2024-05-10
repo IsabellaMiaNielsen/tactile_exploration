@@ -8,7 +8,7 @@ import time
 import glfw
 from robot.robot_control import Robot
 from spatialmath import SE3
-from robot.admittance_Controller import Admittance
+from robot.admittance_Controller_pol import Admitance
 from utils import utility
 class MJ:
   def __init__(self):
@@ -60,7 +60,7 @@ class MJ:
     if key == glfw.KEY_U:
       self.robot.up()
 
-    if key == glfw.KEY_PERIOD: # Dot
+    if key == glfw.KEY_PERIOD:
       print("ee pose = \n", self.robot.get_ee_pose())
 
     if key ==  glfw.KEY_F:
@@ -126,21 +126,23 @@ class MJ:
       print("changed pose: ", rotated_pose)
       self.robot.set_ee_pose(rotated_pose)
 
-
-
   def launch_mujoco(self):
+
     #Move robot to TOP touch pose:
     self.robot.home()
     
-    # Initialize the Admittance controller outside the loop
-    controller = Admittance(self.robot, self.m, self.d)
 
-    quat = np.array([0,1,0,1])
-    quat = quat / np.linalg.norm(quat)
+    # Initialize the Admittance controller outside the loop
+
+    controller = Admitance(self.robot, self.m, self.d) #creating controller isntance for the first time!
 
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
+      #wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+      #controller = Admitance(target_force = 1, wrench=wrench, curent_TCP=self.robot.get_ee_pose(), model_data=self.d, dt=0.002)
 
-      while viewer.is_running():
+
+      while viewer.is_running(): #LOOP 
+        
         step_start = time.time()
         with self._data_lock:
           mujoco.mj_step(self.m, self.d)
@@ -148,24 +150,43 @@ class MJ:
         # Pick up changes to the physics state, apply perturbations, update options from GUI.
         viewer.sync()
 
-        # If key "G" was pressed, run controller
         if self.run_control:
-          pose_transformation_matrix = self.robot.get_ee_pose()
+          #Call controller
 
-          target = np.array([-0.45, 0.2, 0.31, quat[0], quat[1], quat[2], quat[3]])
+          force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu') #FORCE READING
+          final_T = controller.admitance(force, rot, success)
+          print(final_T)
+          
 
-          target_reached = False         
-          while not target_reached:
-            compliant_pose, target_reached = controller.step(target)
+          #print(final_T)
 
-            # Move robot to compliant pose
-            self.robot.set_ee_pose(compliant_pose) 
+          self.robot.set_ee_pose(final_T) #MOVE ROBOT TO NEW POSE
 
-            if target_reached:
-              print("Target reached")
-      
+
 
         # Rudimentary time keeping, will drift relative to wall clock.
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
+        #wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')'''
+
+  '''def launch_mujoco(self):
+    with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
+      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+      controller = Admitance(target_force = 1, wrench=wrench, curent_TCP=self.robot.get_ee_pose(), model_data=self.d, dt=0.002)
+      while viewer.is_running():
+        # print(self.d.sensordata)
+        
+        step_start = time.time()
+        with self._data_lock:
+          mujoco.mj_step(self.m, self.d)
+
+        # Pick up changes to the physics state, apply perturbations, update options from GUI.
+        viewer.sync()
+
+        # Rudimentary time keeping, will drift relative to wall clock.
+        time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
+        if time_until_next_step > 0:
+          time.sleep(time_until_next_step)
+        wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')'''
+        
