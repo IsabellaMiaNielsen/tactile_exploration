@@ -6,7 +6,7 @@ from spatialmath import SE3
 def _rotation_matrix_to_align_z_to_direction(direction):
     # Normalize direction vector
     direction /= np.linalg.norm(direction)
-    print("normalized force: ", direction)
+    # print("normalized force: ", direction)
 
     # Calculate axis of rotation
     axis = np.cross([0, 0, 1], direction)

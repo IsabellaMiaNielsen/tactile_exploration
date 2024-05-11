@@ -31,15 +31,15 @@ class Admittance:
         self.model = m
         self.data = d
 
-        self.dt = 0.002
+        self.dt = 0.001
         
-        self.target_tol = 0.005 #0.0075
+        self.target_tol = 0.0075 #0.0075
 
         # Gain matrices
         m = 1
         kenv = 20000 # 5000 for softbody
         kd = 250 # 1
-        k = 5 #4/m * kd - kenv
+        k = 10 #4/m * kd - kenv
 
         self.M = np.array([[m,0,0],[0,m,0],[0,0,m]])
         self.K = np.array([[k,0,0],[0,k,0],[0,0,0]])
@@ -56,39 +56,41 @@ class Admittance:
         self.object_center = [0.4, 0.2, 0.08]
 
         self.aligned = False
-        self.contact = False
 
 
     def admittance(self, target):
+        self.target = np.copy(target)
         tcp_pose = self.robot.get_ee_pose()
         tcp_rot_mat = tcp_pose.R
         tcp_pos = tcp_pose.t
 
         tcp_quat = self.mat2quat(tcp_rot_mat)
-        self.actual_pose = np.concatenate([tcp_pos, tcp_quat])
-        self.target_pose = target
-
-        self._x_d = target[:3]
 
         # Check for contact and get current force
-        force, _, is_in_contact = utility._get_contact_info(model=self.model, data=self.data, actor='gripper', obj='pikachu')
+        force, rot_contact, is_in_contact = utility._get_contact_info(model=self.model, data=self.data, actor='gripper', obj='pikachu')
+
 
         if is_in_contact:
             self.target_force = np.array([0.0, 0.0, -2.0]) # Direction in base-frame
-            self.contact = False
 
-
-        if self.contact:
-            tool_tip_pos = self.data.site_xpos[self.model_names.site_name2id["tcp_site"]]
-            print("Current Rotation: ", tcp_rot_mat)
-            surface_normal = np.array([0, 0, 1])# self.point_cloud.get_surface_normal(tool_tip_point=tool_tip_pos, print_normal=False)
-            rot_align = self.force_utils.align_with_surface_normal(tcp_rot_mat, surface_normal)
-
-            print("Alignment Rotation: ", rot_align)
-            # Convert alignment rotation matrix to quaternion
-            align_quaternion = Rotation.from_matrix(rot_align).as_quat()
+            r = utility.directionToNormal(
+                    tcp_pose.R,
+                    force, 
+                    rot=rot_contact
+                    )
+            align_rot_matrix = r.as_matrix()
+            self.target[-4:] = r.as_quat()
         else:
-            align_quaternion = target[-4:]
+            align_rot_matrix = self.quat2mat(self.target[-4:])
+
+
+        self.actual_pose = np.concatenate([tcp_pos, tcp_quat])
+        self.target_pose = self.target
+        print("Actual pose: ,", self.actual_pose)
+        print("Target pose: ", self.target_pose)
+
+        self._x_d = self.target[:3]
+
         
         # Update gains based on orientation function
         # self.M = rot_align @ self.M
@@ -98,33 +100,35 @@ class Admittance:
 
         # Positional part of the admittance controller
         # Step 1: Acceleration error
-        ddx_e = np.linalg.inv(self.M) @ (force + self.target_force - self.K @ self._x_e - self.D @ self._dx_e)
+        self._ddx_e = np.linalg.inv(self.M) @ (-force + self.target_force - self.K @ self._x_e - self.D @ self._dx_e)
 
         # Step 2: Integrate -> velocity error
-        self._dx_e += ddx_e * self.dt # Euler integration
+        self._dx_e += self._ddx_e * self.dt # Euler integration
 
         # Step 3: Integrate -> position error
         self._x_e += self._dx_e * self.dt # Euler integration
 
         # Step 4: Update the position
         self._x_c = self._x_d + self._x_e
+        
 
         print("Current Position: ", tcp_pos)
-        # print("Desired Position: ", self._x_d)
-        # # print("Force: ", force)
+        print("Desired Position: ", self._x_d)
+        print("Force: ", -force)
         # print("Position error: ", self._x_e)
         print("Compliant Position: ", self._x_c)
 
-        align_rot_matrix = self.quat2mat(align_quaternion)
-        # compliant_pose = SE3.Rt(tcp_pose.R, self._x_c)
+        compliant_pose = SE3.Rt(align_rot_matrix, self._x_c)
 
-        compliant_pose = utility.get_ee_transformation(tcp_pose.R, tcp_pose.t, align_rot_matrix) 
-        print(compliant_pose)
+        print("TCP: ", SE3.Rt(tcp_pose.R, self._x_c))
+
+        # compliant_pose = utility.get_ee_transformation(tcp_pose.R, tcp_pose.t, align_rot_matrix) 
         return compliant_pose
 
 
     def target_reached(self):
         if self.actual_pose is not None and self.target_pose is not None:
+            print(max(np.abs(self.actual_pose - self.target_pose)))
             return max(np.abs(self.actual_pose - self.target_pose)) < self.target_tol
         else:
             return False
@@ -132,7 +136,11 @@ class Admittance:
 
     def step(self, target):
         compliant_pose = self.admittance(target)
-        return compliant_pose, self.target_reached()
+
+        # Move robot to compliant pose
+        self.robot.set_ee_pose(compliant_pose) 
+        
+        return self.target_reached()
 
 
 

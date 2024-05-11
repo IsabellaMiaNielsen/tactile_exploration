@@ -4,6 +4,8 @@
 
   <statistic center="0.3 0 0.4" extent="0.8"/>
 
+   <option integrator="Euler" timestep="0.001" gravity="0 0 0"/>
+
   <visual>
     <headlight diffuse="0.6 0.6 0.6" ambient="0.1 0.1 0.1" specular="0 0 0"/>
     <rgba haze="0.15 0.25 0.35 1"/>

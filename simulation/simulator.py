@@ -150,16 +150,21 @@ class MJ:
 
         # If key "G" was pressed, run controller
         if self.run_control:
-          pose_transformation_matrix = self.robot.get_ee_pose()
+          curr_pose_SE3 = self.robot.get_ee_pose()
+          # target = np.array([0.43, 0.2, 0.3, quat[0], quat[1], quat[2], quat[3]])
+          curr_pos = curr_pose_SE3.t
+          curr_quat = controller.mat2quat(curr_pose_SE3.R)
+          target = np.array([curr_pos[0] - 0.01, curr_pos[1] + 0.01, curr_pos[2], curr_quat[0], curr_quat[1], curr_quat[2], curr_quat[3]])
+          print(target)
 
-          target = np.array([-0.45, 0.2, 0.31, quat[0], quat[1], quat[2], quat[3]])
 
           target_reached = False         
           while not target_reached:
-            compliant_pose, target_reached = controller.step(target)
+            target_reached = controller.step(target)
 
-            # Move robot to compliant pose
-            self.robot.set_ee_pose(compliant_pose) 
+            with self._data_lock:
+              mujoco.mj_step(self.m, self.d)
+            viewer.sync()
 
             if target_reached:
               print("Target reached")
