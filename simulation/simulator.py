@@ -4,12 +4,15 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 import roboticstoolbox as rtb
+from spatialmath.base import r2q
 import time
 import glfw
 from robot.robot_control import Robot
 from spatialmath import SE3
 from robot.admittance_Controller import Admittance
 from utils import utility
+
+
 class MJ:
   def __init__(self):
     self.m = mujoco.MjModel.from_xml_path('scene_files/scene.xml')
@@ -151,16 +154,20 @@ class MJ:
         # If key "G" was pressed, run controller
         if self.run_control:
           curr_pose_SE3 = self.robot.get_ee_pose()
-          # target = np.array([0.43, 0.2, 0.3, quat[0], quat[1], quat[2], quat[3]])
-          curr_pos = curr_pose_SE3.t
-          curr_quat = controller.mat2quat(curr_pose_SE3.R)
-          target = np.array([curr_pos[0] - 0.01, curr_pos[1] + 0.01, curr_pos[2], curr_quat[0], curr_quat[1], curr_quat[2], curr_quat[3]])
-          print(target)
+          curr_quat = r2q(curr_pose_SE3.R, order='xyzs')
+          # target = np.array([curr_pose_SE3.t[0] - 0.01, curr_pose_SE3.t[1] + 0.01, curr_pose_SE3.t[2], curr_quat[0], curr_quat[1], curr_quat[2], curr_quat[3]])
 
+          # Always moves in the direction [-0.005, 0.005, 0] in end-effector/TCP frame
+          translation_frame = SE3.Rt(np.eye(3), [-0.002, -0.002, 0]) 
+          target_frame = curr_pose_SE3 * translation_frame
+
+          # Construct the target pose
+          target = np.concatenate([target_frame.t, curr_quat])
+          controller.target = target
 
           target_reached = False         
           while not target_reached:
-            target_reached = controller.step(target)
+            target_reached = controller.step()
 
             with self._data_lock:
               mujoco.mj_step(self.m, self.d)
