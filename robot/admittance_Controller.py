@@ -118,10 +118,7 @@ class Admittance:
         # print("Compliant Position: ", self._x_c)
 
         compliant_pose = SE3.Rt(self.align_rot_matrix, self._x_c)
-
         # print("TCP: ", SE3.Rt(tcp_pose.R, self._x_c))
-
-        # compliant_pose = utility.get_ee_transformation(tcp_pose.R, tcp_pose.t, align_rot_matrix) 
         return compliant_pose
 
 
