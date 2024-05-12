@@ -138,9 +138,6 @@ class MJ:
     # Initialize the Admittance controller outside the loop
     controller = Admittance(self.robot, self.m, self.d)
 
-    quat = np.array([0,1,0,1])
-    quat = quat / np.linalg.norm(quat)
-
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
 
       while viewer.is_running():
@@ -158,11 +155,12 @@ class MJ:
           # target = np.array([curr_pose_SE3.t[0] - 0.01, curr_pose_SE3.t[1] + 0.01, curr_pose_SE3.t[2], curr_quat[0], curr_quat[1], curr_quat[2], curr_quat[3]])
 
           # Always moves in the direction [-0.005, 0.005, 0] in end-effector/TCP frame
-          translation_frame = SE3.Rt(np.eye(3), [-0.002, -0.002, 0]) 
+          translation_frame = SE3.Rt(np.eye(3), [-0.002, -0.002, 0])
           target_frame = curr_pose_SE3 * translation_frame
 
           # Construct the target pose
           target = np.concatenate([target_frame.t, curr_quat])
+          print(target)
           controller.target = target
 
           target_reached = False         
@@ -172,9 +170,6 @@ class MJ:
             with self._data_lock:
               mujoco.mj_step(self.m, self.d)
             viewer.sync()
-
-            if target_reached:
-              print("Target reached")
       
 
         # Rudimentary time keeping, will drift relative to wall clock.

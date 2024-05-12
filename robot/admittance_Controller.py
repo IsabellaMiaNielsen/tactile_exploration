@@ -34,13 +34,13 @@ class Admittance:
 
         self.dt = 0.002
         
-        self.target_tol = 0.0055 #0.0075
+        self.target_tol = 0.008 #0.0075
 
         # Gain matrices
         m = 100
-        kenv = 20000 # 5000 for softbody
-        kd = 250 # 1
-        k = 1 #4/m * kd - kenv
+        kenv = 20000
+        kd = 300 # 1
+        k = 10 #4/m * kd - kenv
 
         self.M = np.array([[m,0,0],[0,m,0],[0,0,m]])
         self.K = np.array([[k,0,0],[0,k,0],[0,0,0]])
@@ -51,9 +51,10 @@ class Admittance:
         self._dc_c = np.array([0.0, 0.0, 0.0])
         self._x_e = np.array([0.0, 0.0, 0.0])
         self._dx_e = np.array([0.0, 0.0, 0.0])
-        self.target_force = np.array([0.0, 0.0, -50.0])
+        self.target_force = np.array([0.0, 0.0, 0.0])
 
         self.target = self.robot.get_ee_pose().t
+        self.force = np.array([0, 0, 0])
 
 
     def admittance(self):
@@ -63,16 +64,23 @@ class Admittance:
 
         tcp_quat = r2q(tcp_rot_mat, order='xyzs')
 
+        self.force = np.array([0, 0, 0])
+        self.force_memory = np.array([0, 0, 0])
+
         # Check for contact and get current force
-        force, rot_contact, is_in_contact = utility._get_contact_info(model=self.model, data=self.data, actor='gripper', obj='pikachu')
+        self.force, rot_contact, is_in_contact = utility._get_contact_info(model=self.model, data=self.data, actor='gripper', obj='pikachu')
+
+        if np.max(np.abs(self.force)) < self.target_tol:
+            self.force = self.force_memory
+
+        self.force_memory = self.force
 
         if is_in_contact:
-            target_force_frame = tcp_pose * SE3.Rt(np.eye(3), [0.0, 0.0, 2.0]) # Direction in base-frame
-            self.target_force = target_force_frame.t
+            self.target_force = np.array([0.0, 0.0, -14.0])
 
             r = utility.directionToNormal(
                     tcp_pose.R,
-                    force, 
+                    self.force, 
                     rot=rot_contact
                     )
             self.align_rot_matrix = r.as_matrix()
@@ -99,7 +107,7 @@ class Admittance:
 
         # Positional part of the admittance controller
         # Step 1: Acceleration error
-        self._ddx_e = np.linalg.inv(self.M) @ (-force + self.target_force - self.K @ self._x_e - self.D @ self._dx_e)
+        self._ddx_e = np.linalg.inv(self.M) @ (-self.force + self.target_force - self.K @ self._x_e - self.D @ self._dx_e)
 
         # Step 2: Integrate -> velocity error
         self._dx_e += self._ddx_e * self.dt # Euler integration
@@ -117,14 +125,18 @@ class Admittance:
         # print("Position error: ", self._x_e)
         # print("Compliant Position: ", self._x_c)
 
-        compliant_pose = SE3.Rt(self.align_rot_matrix, self._x_c)
+        # compliant_pose = SE3.Rt(np.asarray(self.align_rot_matrix), self._x_c)
         # print("TCP: ", SE3.Rt(tcp_pose.R, self._x_c))
+
+        if max(np.abs(self.actual_pose[-4:] - self.target_pose[-4:])) < self.target_tol:
+            compliant_pose = SE3.Rt(np.asarray(self.align_rot_matrix), self._x_c)
+        else:
+            compliant_pose = utility.get_ee_transformation(tcp_pose.R, tcp_pose.t, np.asarray(self.align_rot_matrix))
         return compliant_pose
 
 
     def target_reached(self):
         if self.actual_pose is not None and self.target_pose is not None:
-            print(max(np.abs(self.actual_pose - self.target_pose)))
             return max(np.abs(self.actual_pose - self.target_pose)) < self.target_tol
         else:
             return False
