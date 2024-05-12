@@ -176,3 +176,55 @@ class MJ:
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
+
+
+
+
+  def launch_mujoco_simple_controller(self):
+    aligned = False
+    with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
+      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+
+      # Rudimentary time keeping, will drift relative to wall clock.
+      time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
+      if time_until_next_step > 0:
+        time.sleep(time_until_next_step)
+      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+      time.sleep(time_until_next_step)
+      if self.run_control:
+        force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+        if success: # If contact
+          if not aligned:
+            # Align 
+            pose = self.robot.get_ee_pose()
+            r = utility.directionToNormal(
+              pose.R,
+              force, 
+              rot=rot
+            )
+            rotated_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) 
+            self.robot.set_ee_pose(rotated_pose)
+            print("Aligned")
+            aligned = True
+          else:
+            pose = self.robot.get_ee_pose()
+            if np.allclose(pose, rotated_pose, rtol=1e-03): # We have aligned correctly
+              # Move parallel to the surface
+              self.robot.move_parallel(self.step_size, self.angle)
+              self.angle += 1
+              if self.step_size > 0.05: # Reset step size
+                self.step_size = 0.01
+              else:
+                self.step_size += 0.005
+              print("Moving along the surface")
+              aligned = False
+            else:
+              self.robot.set_ee_pose(rotated_pose)
+              aligned = False # Continue aligning
+
+        else:
+          # Move towards center if no contact
+          step_start = time.time()
+          self.robot.move_to_center(self.object_center, step_size=0.05)
+          print("Moving towards the center")
+          aligned = False
