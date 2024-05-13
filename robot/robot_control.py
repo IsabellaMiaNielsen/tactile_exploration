@@ -31,6 +31,9 @@ class Robot:
         self._TOUCH = [-3.00, -1.38, 1.79, -1.57, -1.57, 0]
         self._DIRECT_TOUCH = [-3.02, -1.57, 2.11, -2.07, -1.57, 0]
         self._UP = [0, 0, 0, 0, 0, 0]
+        self._LEFT = [1.24, -2.32, -1.53, -2.57, 0.876, 0]
+        self._RIGHT = [2.61, -1.1, 2.26, -0.848, -0.503, 0]
+        self._FRONT = [1.71, -1.76, -2.64, -1.82, 0.22, 0]
         self._BACK_TOUCH = [-2.92, -0.66, 1.15, -0.785, -1.6, 0]
         self._SIDE_TOUCH = [-2.4399, -0.785453, 1.37695, -0.699149, -2.419, -2.2732]
 
@@ -67,6 +70,15 @@ class Robot:
 
     def up(self) -> None:
         self.set_q(q=self._UP)
+
+    def left(self) -> None:
+        self.set_q(q=self._LEFT)
+
+    def right(self) -> None:
+        self.set_q(q=self._RIGHT)
+
+    def front(self) -> None:
+        self.set_q(q=self._FRONT)
 
     def touch(self) -> None:
         self.set_q(q=self._TOUCH)

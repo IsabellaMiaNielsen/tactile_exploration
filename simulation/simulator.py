@@ -68,6 +68,15 @@ class MJ:
     if key == glfw.KEY_U:
       self.robot.up()
 
+    if key == glfw.KEY_R:
+      self.robot.left()
+
+    if key == glfw.KEY_Y:
+      self.robot.right()
+
+    if key == glfw.KEY_5:
+      self.robot.front()
+
     if key == glfw.KEY_PERIOD:
       print("ee pose = \n", self.robot.get_ee_pose())
 
