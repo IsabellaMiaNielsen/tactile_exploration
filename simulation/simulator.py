@@ -151,8 +151,65 @@ class MJ:
       self.robot.set_ee_pose(rotated_pose)
 
 
-
   def launch_mujoco(self):
+    aligned = False
+    wanted_pose = None
+    start_time = None
+    with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
+      while viewer.is_running():
+        step_start = time.time()
+        with self._data_lock:
+          mujoco.mj_step(self.m, self.d)
+
+        # Pick up changes to the physics state, apply perturbations, update options from GUI.
+        viewer.sync()
+
+        if self.run_control:
+          pose = self.robot.get_ee_pose()
+          if wanted_pose is None or np.allclose(pose, wanted_pose, rtol=1e-02, atol=1e-3):
+            force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+            if success: # If contact
+              if not aligned:
+                # Align 
+                r = utility.directionToNormal(
+                  pose.R,
+                  force, 
+                  rot=rot
+                )
+                wanted_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) 
+                self.robot.set_ee_pose(wanted_pose)
+                print("Aligned")
+                aligned = True
+              else:
+                # Save point
+                self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time())
+                # Move parallel to the surface
+                wanted_pose = self.robot.move_parallel(self.step_size)
+                print("Moving along the surface")
+                aligned = False
+            else:
+              # Move towards center if no contact
+              step_start = time.time()
+              wanted_pose = self.robot.move_to_center(self.object_center, step_size=0.02)
+              print("Moving towards the center")
+              aligned = False
+          else:
+            if start_time is None:
+              start_time = time.time()
+            elif time.time() - start_time > 2:
+              wanted_pose = None
+              start_time = None
+              print("Not converging. Resetting")
+
+
+
+        # Rudimentary time keeping, will drift relative to wall clock.
+        time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
+        if time_until_next_step > 0:
+          time.sleep(time_until_next_step)
+
+
+  def launch_mujoco_admittance(self):
     #Move robot to TOP touch pose:
     self.robot.home()
     
@@ -214,60 +271,6 @@ class MJ:
           #     self.sense.create_gp_model()
           #   else:
           #     self.sense.update_gp_model()
-
-
-        # Rudimentary time keeping, will drift relative to wall clock.
-        time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
-        if time_until_next_step > 0:
-          time.sleep(time_until_next_step)
-
-
-
-def launch_mujoco_simple_controller(self):
-    aligned = False
-    wanted_pose = None
-    start_time = None
-    with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
-        # Pick up changes to the physics state, apply perturbations, update options from GUI.
-        viewer.sync()
-
-        if self.run_control:
-          pose = self.robot.get_ee_pose()
-          if wanted_pose is None or np.allclose(pose, wanted_pose, rtol=1e-02, atol=1e-3):
-            force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
-            if success: # If contact
-              if not aligned:
-                # Align 
-                r = utility.directionToNormal(
-                  pose.R,
-                  force, 
-                  rot=rot
-                )
-                wanted_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) 
-                self.robot.set_ee_pose(wanted_pose)
-                print("Aligned")
-                aligned = True
-              else:
-                # Save point
-                self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time())
-                # Move parallel to the surface
-                wanted_pose = self.robot.move_parallel(self.step_size)
-                print("Moving along the surface")
-                aligned = False
-            else:
-              # Move towards center if no contact
-              step_start = time.time()
-              wanted_pose = self.robot.move_to_center(self.object_center, step_size=0.02)
-              print("Moving towards the center")
-              aligned = False
-          else:
-            if start_time is None:
-              start_time = time.time()
-            elif time.time() - start_time > 2:
-              wanted_pose = None
-              start_time = None
-              print("Not converging. Resetting")
-
 
 
         # Rudimentary time keeping, will drift relative to wall clock.
