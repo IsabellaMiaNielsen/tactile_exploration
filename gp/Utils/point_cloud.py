@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import open3d as o3d
+# from gp.utils.visualizer import Visualizer as Visu
 from utils.visualizer import Visualizer as Visu
 
 

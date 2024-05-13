@@ -11,7 +11,7 @@ from robot.robot_control import Robot
 from spatialmath import SE3
 from robot.admittance_Controller import Admittance
 from utils import utility
-
+from vision.reconstruction import sense
 
 class MJ:
   def __init__(self):
@@ -21,6 +21,10 @@ class MJ:
     self.robot = Robot(m=self.m, d=self.d)
     self.run_control = False
     self.object_center = [0.35, 0.2, 0.08]
+    self.angle = 1
+    self.step_size = 0.05
+    self.sense = sense()
+
     
   def run(self) -> None:
     self.th = Thread(target=self.launch_mujoco, daemon=True)
@@ -96,11 +100,19 @@ class MJ:
         print("changed pose: ", rotated_pose)
         self.robot.set_ee_pose(rotated_pose)
 
+    if key == glfw.KEY_P:
+      # Visualize the gp surface
+      self.sense.visualize_gp_surface()
+
+    if key == glfw.KEY_C:
+      # Show point cloud
+      self.sense.vizualise_pcd()
+
     if key == glfw.KEY_G:
       if self.run_control:
         self.run_control = False
       else:
-        self.run_control = True           
+        self.run_control = True         
         
     if key == glfw.KEY_UP:
       # Align to force
@@ -159,27 +171,50 @@ class MJ:
 
         # If key "G" was pressed, run controller
         if self.run_control:
-          curr_pose_SE3 = self.robot.get_ee_pose()
-          curr_quat = r2q(curr_pose_SE3.R, order='xyzs')
-          # target = np.array([curr_pose_SE3.t[0] - 0.01, curr_pose_SE3.t[1] + 0.01, curr_pose_SE3.t[2], curr_quat[0], curr_quat[1], curr_quat[2], curr_quat[3]])
+          _, rot_contact, is_in_contact = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+          if not is_in_contact:
+            wanted_pose = self.robot.move_to_center(self.object_center, step_size=0.02)
+            self.robot.set_ee_pose(wanted_pose) 
+          else:
+            curr_pose_SE3 = self.robot.get_ee_pose()
+            curr_quat = r2q(curr_pose_SE3.R, order='xyzs')
+            # target = np.array([curr_pose_SE3.t[0] - 0.01, curr_pose_SE3.t[1] + 0.01, curr_pose_SE3.t[2], curr_quat[0], curr_quat[1], curr_quat[2], curr_quat[3]])
 
-          # Always moves in the direction [-0.005, 0.005, 0] in end-effector/TCP frame
-          translation_frame = SE3.Rt(np.eye(3), [-0.002, -0.002, 0])
-          target_frame = curr_pose_SE3 * translation_frame
+            # Always moves in the direction [-0.005, 0.005, 0] in end-effector/TCP frame
+            translation_frame = SE3.Rt(np.eye(3), [-0.002, -0.002, 0])
+            target_frame = curr_pose_SE3 * translation_frame
 
-          # Construct the target pose
-          target = np.concatenate([target_frame.t, curr_quat])
-          print(target)
-          controller.target = target
+            # Construct the target pose
+            target = np.concatenate([target_frame.t, curr_quat])
+            print(target)
+            controller.target = target
 
-          target_reached = False         
-          while not target_reached and self.run_control:
-            target_reached = controller.step()
+            target_reached = False         
+            while not target_reached and self.run_control:
+              target_reached = controller.step()
 
-            with self._data_lock:
-              mujoco.mj_step(self.m, self.d)
-            viewer.sync()
+              with self._data_lock:
+                mujoco.mj_step(self.m, self.d)
+              viewer.sync()
+
+
+          # _, rot_contact, is_in_contact = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+          # # Add points only if in contact with the object because only then we can extract also the surface normal
+          # if is_in_contact:
+          #   print("Add point")
+          #   pose = self.robot.get_ee_pose()
+          #   self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time(), -rot_contact[0, 0], -rot_contact[1, 0], -rot_contact[2, 0])
       
+          # # If we have added 100 points we create the model
+          # # Update the model always after additional 10 points have been added
+          # print(self.sense.nr_points_added)
+          # if self.sense.nr_points_added > 3 and self.sense.nr_points_added % 3 == 0:
+          #   if not self.sense.created_gp_model:
+          #     print("Created GP Model")
+          #     self.sense.create_gp_model()
+          #   else:
+          #     self.sense.update_gp_model()
+
 
         # Rudimentary time keeping, will drift relative to wall clock.
         time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
@@ -188,52 +223,54 @@ class MJ:
 
 
 
-
-  def launch_mujoco_simple_controller(self):
+def launch_mujoco_simple_controller(self):
     aligned = False
+    wanted_pose = None
+    start_time = None
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
-      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+        # Pick up changes to the physics state, apply perturbations, update options from GUI.
+        viewer.sync()
 
-      # Rudimentary time keeping, will drift relative to wall clock.
-      time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
-      if time_until_next_step > 0:
-        time.sleep(time_until_next_step)
-      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
-      time.sleep(time_until_next_step)
-      if self.run_control:
-        force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
-        if success: # If contact
-          if not aligned:
-            # Align 
-            pose = self.robot.get_ee_pose()
-            r = utility.directionToNormal(
-              pose.R,
-              force, 
-              rot=rot
-            )
-            rotated_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) 
-            self.robot.set_ee_pose(rotated_pose)
-            print("Aligned")
-            aligned = True
-          else:
-            pose = self.robot.get_ee_pose()
-            if np.allclose(pose, rotated_pose, rtol=1e-03): # We have aligned correctly
-              # Move parallel to the surface
-              self.robot.move_parallel(self.step_size, self.angle)
-              self.angle += 1
-              if self.step_size > 0.05: # Reset step size
-                self.step_size = 0.01
+        if self.run_control:
+          pose = self.robot.get_ee_pose()
+          if wanted_pose is None or np.allclose(pose, wanted_pose, rtol=1e-02, atol=1e-3):
+            force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
+            if success: # If contact
+              if not aligned:
+                # Align 
+                r = utility.directionToNormal(
+                  pose.R,
+                  force, 
+                  rot=rot
+                )
+                wanted_pose = utility.get_ee_transformation(pose.R, pose.t, r.as_matrix()) 
+                self.robot.set_ee_pose(wanted_pose)
+                print("Aligned")
+                aligned = True
               else:
-                self.step_size += 0.005
-              print("Moving along the surface")
-              aligned = False
+                # Save point
+                self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time())
+                # Move parallel to the surface
+                wanted_pose = self.robot.move_parallel(self.step_size)
+                print("Moving along the surface")
+                aligned = False
             else:
-              self.robot.set_ee_pose(rotated_pose)
-              aligned = False # Continue aligning
+              # Move towards center if no contact
+              step_start = time.time()
+              wanted_pose = self.robot.move_to_center(self.object_center, step_size=0.02)
+              print("Moving towards the center")
+              aligned = False
+          else:
+            if start_time is None:
+              start_time = time.time()
+            elif time.time() - start_time > 2:
+              wanted_pose = None
+              start_time = None
+              print("Not converging. Resetting")
 
-        else:
-          # Move towards center if no contact
-          step_start = time.time()
-          self.robot.move_to_center(self.object_center, step_size=0.05)
-          print("Moving towards the center")
-          aligned = False
+
+
+        # Rudimentary time keeping, will drift relative to wall clock.
+        time_until_next_step = self.m.opt.timestep - (time.time() - step_start)
+        if time_until_next_step > 0:
+          time.sleep(time_until_next_step)

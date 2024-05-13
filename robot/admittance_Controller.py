@@ -94,12 +94,12 @@ class Admittance:
         else:
             self.align_rot_matrix = q2r(self.target[-4:], order='xyzs')
 
-        print("Target force: ", self.target_force)
+        # print("Target force: ", self.target_force)
 
         self.actual_pose = np.concatenate([tcp_pos, tcp_quat])
         self.target_pose = self.target
-        print("Actual pose: ,", self.actual_pose)
-        print("Target pose: ", self.target_pose)
+        # print("Actual pose: ,", self.actual_pose)
+        # print("Target pose: ", self.target_pose)
 
         self._x_d = self.target[:3]
         

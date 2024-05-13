@@ -1,9 +1,12 @@
 import numpy as np
+# from gp.utils.gp_regressor import *
+# from gp.utils.visualizer import Visualizer as Visu
+# from gp.utils.data_analyzer import *
+# from gp.utils.point_cloud import Point_cloud
 from utils.gp_regressor import *
 from utils.visualizer import Visualizer as Visu
 from utils.data_analyzer import *
 from utils.point_cloud import Point_cloud
-
 
 
 ######################################################################################################
@@ -169,6 +172,6 @@ if __name__ == "__main__":
 
     gpis.update_gp_model(test_points, test_normals)
 
-    # gpis.visu_surface()
+    gpis.visu_surface()
     gpis.visu_uncertainty()
     # gpis.visu_surface_grid()

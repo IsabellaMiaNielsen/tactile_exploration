@@ -1,6 +1,7 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
+
 ######################################################################################################
 # GP_Regressor Class as an implementation of the Gaussian Process Implicit Surface GPIS
 # Includes the following functions

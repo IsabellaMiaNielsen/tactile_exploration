@@ -1,6 +1,4 @@
 import numpy as np
-from scipy.optimize import brentq
-from utils.visualizer import Visualizer as Visu
 
 ######################################################################################################
 # DataAnalyzer Class for 
