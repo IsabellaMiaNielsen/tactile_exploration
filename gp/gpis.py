@@ -1,12 +1,12 @@
 import numpy as np
-# from gp.utils.gp_regressor import *
-# from gp.utils.visualizer import Visualizer as Visu
-# from gp.utils.data_analyzer import *
-# from gp.utils.point_cloud import Point_cloud
-from utils.gp_regressor import *
-from utils.visualizer import Visualizer as Visu
-from utils.data_analyzer import *
-from utils.point_cloud import Point_cloud
+from gp.utils.gp_regressor import *
+from gp.utils.visualizer import Visualizer as Visu
+from gp.utils.data_analyzer import *
+from gp.utils.point_cloud import Point_cloud
+# from utils.gp_regressor import *
+# from utils.visualizer import Visualizer as Visu
+# from utils.data_analyzer import *
+# from utils.point_cloud import Point_cloud
 
 
 ######################################################################################################
