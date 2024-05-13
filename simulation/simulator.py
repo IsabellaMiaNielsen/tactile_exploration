@@ -21,7 +21,7 @@ class MJ:
     self._data_lock = Lock()
     self.robot = Robot(m=self.m, d=self.d)
     self.angle = 1
-    self.step_size = 0.05
+    self.step_size = 0.02
     self.object_center = [0.35, 0.2, 0.08]
     self.run_control = False
     self.sense = sense()
@@ -161,8 +161,6 @@ class MJ:
     wanted_pose = None
     start_time = None
     with mujoco.viewer.launch_passive(self.m, self.d, key_callback=self.key_cb) as viewer:
-      wrench = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
-      controller = Admitance(target_force = 1, wrench=wrench, curent_TCP=self.robot.get_ee_pose(), model_data=self.d, dt=0.002)
       while viewer.is_running():
         # print(self.d.sensordata)
         
