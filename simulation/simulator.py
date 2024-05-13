@@ -173,7 +173,7 @@ class MJ:
           controller.target = target
 
           target_reached = False         
-          while not target_reached:
+          while not target_reached and self.run_control:
             target_reached = controller.step()
 
             with self._data_lock:

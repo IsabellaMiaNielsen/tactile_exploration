@@ -79,7 +79,6 @@ class Admittance:
             # self.target_force = np.array([0.0, 0.0, -2.0]) # Direction in base-frame
             target_force_frame = SE3.Rt(tcp_pose.R, [1,1,1]) * SE3.Rt(np.eye(3), [0.0, 0.0, 14.0]) # Direction in base-frame
             self.target_force = target_force_frame.t
-            # self.target_force = np.array([0.0, 0.0, -14.0])
 
             r = utility.directionToNormal(
                     tcp_pose.R,
