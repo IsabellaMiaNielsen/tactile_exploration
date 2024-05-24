@@ -179,14 +179,17 @@ class Point_cloud:
         # self.minx, self.maxx = -0.5, 0.2
         # self.miny, self.maxy = -0.2, 0.5
         # self.minz, self.maxz = -0.2, 0.5
-        self.minx, self.maxx = -0.25, 0.05 
-        self.miny, self.maxy = -0.05, 0.25
-        self.minz, self.maxz = -0.05, 0.25
+        # self.minx, self.maxx = -0.25, 0.05 
+        # self.miny, self.maxy = -0.05, 0.25
+        # self.minz, self.maxz = -0.05, 0.25
+        self.minx, self.maxx = 0.15, 0.65
+        self.miny, self.maxy = -0.1, 0.5
+        self.minz, self.maxz = -0.05, 0.4
 
         # if point cloud is translated, translate also the evaluation limits
-        self.minx, self.maxx = self.minx + self.obj_translate[0], self.maxx + self.obj_translate[0]
-        self.miny, self.maxy = self.miny + self.obj_translate[1], self.maxy + self.obj_translate[1]
-        self.minz, self.maxz = self.minz + self.obj_translate[2], self.maxz + self.obj_translate[2]
+        # self.minx, self.maxx = self.minx + self.obj_translate[0], self.maxx + self.obj_translate[0]
+        # self.miny, self.maxy = self.miny + self.obj_translate[1], self.maxy + self.obj_translate[1]
+        # self.minz, self.maxz = self.minz + self.obj_translate[2], self.maxz + self.obj_translate[2]
     
 
     def generate_Xstar(self):

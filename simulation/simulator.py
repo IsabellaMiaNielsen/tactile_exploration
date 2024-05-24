@@ -22,7 +22,7 @@ class MJ:
     self.run_control = False
     self.object_center = [0.35, 0.2, 0.08]
     self.angle = 1
-    self.step_size = 0.05
+    self.step_size = 0.02
     self.sense = sense()
 
     
@@ -101,8 +101,7 @@ class MJ:
         self.robot.set_ee_pose(rotated_pose)
 
     if key == glfw.KEY_P:
-      # Visualize the gp surface
-      self.sense.visualize_gp_surface()
+      self.sense.create_gp_model()
 
     if key == glfw.KEY_C:
       # Show point cloud
@@ -169,6 +168,10 @@ class MJ:
           if wanted_pose is None or np.allclose(pose, wanted_pose, rtol=1e-02, atol=1e-3):
             force, rot, success = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
             if success: # If contact
+              # Save point
+              self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time(), -rot[0, 0], -rot[1, 0], -rot[2, 0])
+              print(self.sense.nr_points_added)
+              
               if not aligned:
                 # Align 
                 r = utility.directionToNormal(
@@ -181,8 +184,6 @@ class MJ:
                 print("Aligned")
                 aligned = True
               else:
-                # Save point
-                self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time())
                 # Move parallel to the surface
                 wanted_pose = self.robot.move_parallel(self.step_size)
                 print("Moving along the surface")
@@ -253,24 +254,6 @@ class MJ:
               with self._data_lock:
                 mujoco.mj_step(self.m, self.d)
               viewer.sync()
-
-
-          # _, rot_contact, is_in_contact = utility._get_contact_info(model=self.m, data=self.d, actor='gripper', obj='pikachu')
-          # # Add points only if in contact with the object because only then we can extract also the surface normal
-          # if is_in_contact:
-          #   print("Add point")
-          #   pose = self.robot.get_ee_pose()
-          #   self.sense.add_point(pose.t[0], pose.t[1], pose.t[2], time.time(), -rot_contact[0, 0], -rot_contact[1, 0], -rot_contact[2, 0])
-      
-          # # If we have added 100 points we create the model
-          # # Update the model always after additional 10 points have been added
-          # print(self.sense.nr_points_added)
-          # if self.sense.nr_points_added > 3 and self.sense.nr_points_added % 3 == 0:
-          #   if not self.sense.created_gp_model:
-          #     print("Created GP Model")
-          #     self.sense.create_gp_model()
-          #   else:
-          #     self.sense.update_gp_model()
 
 
         # Rudimentary time keeping, will drift relative to wall clock.

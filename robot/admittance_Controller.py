@@ -8,8 +8,6 @@ from spatialmath import SE3, SO3
 from spatialmath.base import q2r, r2q
 import math
 
-EPS = np.finfo(float).eps * 4.0
-
 
 class Admittance:
     def __init__(self, robot, m, d):
@@ -64,16 +62,8 @@ class Admittance:
 
         tcp_quat = r2q(tcp_rot_mat, order='xyzs')
 
-        self.force = np.array([0, 0, 0])
-        self.force_memory = np.array([0, 0, 0])
-
         # Check for contact and get current force
         self.force, rot_contact, is_in_contact = utility._get_contact_info(model=self.model, data=self.data, actor='gripper', obj='pikachu')
-
-        if np.max(np.abs(self.force)) < self.target_tol:
-            self.force = self.force_memory
-
-        self.force_memory = self.force
 
         if is_in_contact:
             # self.target_force = np.array([0.0, 0.0, -2.0]) # Direction in base-frame

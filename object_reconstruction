@@ -1,0 +1,32 @@
+import open3d as o3d
+import numpy as np
+
+def load_points_and_normals(filename="points_and_normals.txt"):
+    points = []
+    normals = []
+    with open(filename, 'r') as file:
+        for line in file:
+            try:
+                x, y, z, t, n_x, n_y, n_z = map(float, line.split())
+                points.append([x, y, z])
+                normals.append([n_x, n_y, n_z])
+            except ValueError as e:
+                print(f"Skipping line due to error: {e}")
+    return points, normals
+                
+def create_point_cloud(points, normals):
+    point_cloud = o3d.geometry.PointCloud()
+    point_cloud.points = o3d.utility.Vector3dVector(points)
+    point_cloud.normals = o3d.utility.Vector3dVector(normals)
+    return point_cloud
+
+
+# Main execution
+if __name__ == "__main__":
+    # Load points and normals from file
+    points, normals = load_points_and_normals("points_and_normals.txt")
+    
+    # Create point cloud with normals
+    point_cloud = create_point_cloud(points, normals)
+
+    o3d.visualization.draw_geometries([point_cloud])

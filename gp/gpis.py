@@ -70,7 +70,7 @@ class GPIS:
 
         # Define the Gaussian Process Regressor model
         length_scale = 0.04 # Optimized for rounded_cube: 0.04
-        noise_3D = 0.001 # 0.001
+        noise_3D = 0.008 # 0.001
         self.gp_regressor = GP_Regressor(length_scale, alpha=noise_3D**2)
 
         # Fit GP model to training data
@@ -155,23 +155,76 @@ class GPIS:
         Visu.plot_uncertainties_3D(self.dataAnalyzer.zero_crossings, self.dataAnalyzer.unc_at_zero_crossings)
 
 
+    def load_points_and_normals(self, filename="./points_and_normals.txt"):
+        """
+        Load points and normals from a file.
+        """
+        self.points = []
+        self.timesteps = []
+        self.normals = []
+        self.nr_points_added = 0
+
+        with open(filename, 'r') as file:
+            for line in file:
+                try:
+                    # Split line and map to float, ensuring there are exactly 7 elements
+                    x, y, z, t, n_x, n_y, n_z = map(float, line.split())
+                    self.points.append([x, y, z])
+                    self.timesteps.append(t)
+                    self.normals.append([n_x, n_y, n_z])
+                    self.nr_points_added += 1
+                except ValueError as e:
+                    print(f"Skipping line due to error: {e}")
+
+
 if __name__ == "__main__":
-    gpis = GPIS(obj_translate = [-0.3, 0, 0.735], d_outside = 0.04, d_inside = 0.04, resolution = 20)
+    # gpis = GPIS(obj_translate = [-0.3, 0, 0.735], d_outside = 0.04, d_inside = 0.04, resolution = 20)
 
-    # Create example points from object file and split into train and test points with normals
-    pc = Point_cloud()
-    pc.load_from_object_file(num_points=100)
-    train_points = np.asarray(pc.point_cloud.points)[:80] 
-    train_normals = np.asarray(pc.point_cloud.normals)[:80]
-    test_points = np.asarray(pc.point_cloud.points)[80:]
-    test_normals = np.asarray(pc.point_cloud.normals)[80:]
+    # # Create example points from object file and split into train and test points with normals
+    # pc = Point_cloud()
+    # # pc.load_from_object_file(num_points=100)
+    # # train_points = np.asarray(pc.point_cloud.points)[:80]
+    # # train_normals = np.asarray(pc.point_cloud.normals)[:80]
+    # # test_points = np.asarray(pc.point_cloud.points)[80:]
+    # # test_normals = np.asarray(pc.point_cloud.normals)[80:]
 
-    gpis.create_gp_model(train_points, train_normals)
+    # pc.load_from_object_file(num_points=30)
+    # train_points = np.asarray(pc.point_cloud.points)
+    # train_normals = np.asarray(pc.point_cloud.normals)
 
-    # gpis.visu_point_cloud_open3d()
+    # gpis.create_gp_model(train_points, train_normals)
 
-    gpis.update_gp_model(test_points, test_normals)
+    # # mask = train_points[:, 2] > 0.785
+
+    # # # Use the mask to filter the points
+    # # filtered_points = train_points[mask]
+    # # filtered_normals = train_normals[mask]
+
+    # # # Generate a random permutation of indices
+    # # permutation = np.random.permutation(filtered_points.shape[0])
+
+    # # # Shuffle the filtered points and normals using the permutation
+    # # shuffled_points = filtered_points[permutation]
+    # # shuffled_normals = filtered_normals[permutation]
+
+    # # print(len(shuffled_points))
+    # # gpis.create_gp_model(shuffled_points[:40], shuffled_normals[:40])
+
+    # # # gpis.visu_point_cloud_open3d()
+
+    # # # gpis.update_gp_model(test_points, test_normals)
+
+    # gpis.visu_surface()
+    # gpis.visu_uncertainty()
+    # # gpis.visu_surface_grid()
+
+
+    gpis = GPIS(obj_translate = [0.0, 0.0, 0.0], d_outside = 0.04, d_inside = 0.04, resolution = 20)
+    gpis.load_points_and_normals()
+    print(gpis.nr_points_added)
+    gpis.create_gp_model(gpis.points, gpis.normals)
+
+    # gpis.visu_train_data()
 
     gpis.visu_surface()
     gpis.visu_uncertainty()
-    # gpis.visu_surface_grid()

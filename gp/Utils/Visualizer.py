@@ -195,9 +195,12 @@ class Visualizer:
         """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(zero_crossings[:, 0], zero_crossings[:, 1], zero_crossings[:, 2], c=uncertainties_at_zero_crossings, cmap='viridis', s=20)
+        sc = ax.scatter(zero_crossings[:, 0], zero_crossings[:, 1], zero_crossings[:, 2], c=uncertainties_at_zero_crossings, cmap='viridis', s=20)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-        ax.set_title('Uncertainties at zero-crossing points')
+        # Adding the color bar
+        cbar = plt.colorbar(sc, ax=ax, pad=0.15)
+        cbar.set_label('Uncertainty')
+        # ax.set_title('Uncertainties at zero-crossing points')
         plt.show()

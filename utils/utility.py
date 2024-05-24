@@ -30,10 +30,8 @@ def directionToNormal(TCP_R, force, rot):
     # if force[0] == 0 and force[1] == 0 and force[2] == 0:
     #     print("We are not in contact. Nothing to align to.")
     #     return Rotation.from_matrix(TCP_R)
-    # print("Force: ", force)
-    z_axis = rot[:, 0]
-    # print("Z-axis: ", z_axis)
-    rot = Rotation.from_matrix(_rotation_matrix_to_align_z_to_direction(z_axis))
+    axis = rot[:, 0]
+    rot = Rotation.from_matrix(_rotation_matrix_to_align_z_to_direction(axis))
     return rot
 
 def get_ee_transformation(rot, ee_position, desired_rot):
