@@ -1,8 +1,2 @@
 # tactile_exploration
-Repo for project in tactile exploration for assembly or grasping. 
-
-# ToDo this week
-- [ ] Add object to scene
-- [ ] Write recontruction code
-- [ ] Add force sensor to robot
-- [ ] Look into relevant papers
+A randomized exploration of a surface in mujoco using a UR5. The program can be run through the main file.
